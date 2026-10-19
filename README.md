@@ -15,31 +15,4 @@ assets/                樣式與程式（style.css、common.js、notes.js、engl
 tools/extract.mjs      從「會考衝刺站」HTML 抽出筆記的工具
 ```
 
-## 發布到 GitHub Pages
-
-Settings → Pages → Build and deployment → Source 選 **Deploy from a branch**，Branch 選 `main`、資料夾 `/ (root)`，存檔。
-幾分鐘後網址會是 `https://self-study-junior.github.io/Junior/`。
-
-## 更新或新增科目
-
-1. 用整理好的「會考衝刺站」HTML 重新抽出筆記（題庫會自動略過）：
-
-   ```
-   node tools/extract.mjs 公民會考衝刺站.html civics
-   ```
-
-   加上 `--images` 會連講義附圖一起輸出到 `assets/img/<科目>/`。這些圖多半是出版社講義的掃描，公開的 repo 請先確認版權再加。
-
-2. 新科目：在 `assets/subjects.js` 加一筆（或把 `ready` 改成 `true`），再複製一個現有科目的資料夾，把 `data-subject` 和 `data/<科目>.js` 改成新的科目代號。單元式科目用 `notes.js`；資料格式是單元陣列，每單元有 `unit`、`part`、`title`、`summary`、`sections`、`confusions`、`terms`，可選 `experiments`、`timeline`、`sources`。
-
-## 本機預覽
-
-```
-python3 -m http.server
-```
-
-再打開 http://localhost:8000 。也可以直接雙擊 `index.html` 開啟。
-
----
-
 筆記內容整理自南一《超會考》、康軒《勝經》與翰林《大滿貫》國中複習講義，僅供個人自學使用。
