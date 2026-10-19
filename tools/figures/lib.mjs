@@ -1,7 +1,7 @@
 // 附圖繪製小工具：產生 SVG 字串
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { geoMercator, geoPath, geoEquirectangular, geoNaturalEarth1, geoGraticule10 } from 'd3-geo';
+import { geoMercator, geoPath, geoEquirectangular, geoNaturalEarth1, geoGraticule10, geoArea } from 'd3-geo';
 import { feature, mesh } from 'topojson-client';
 
 export const C = {
@@ -136,9 +136,11 @@ export function geomap({ bbox, w, res = '50m', proj = 'mercator', borders = true
   P0.scale(s).translate([-a[0] * s, -a[1] * s]).clipExtent([[0, 0], [w, h]]);
   const path = geoPath(P0).digits(1);
   const t = topo(res);
-  const land = feature(t, t.objects.land || t.objects.countries);
+  // 用各國輪廓當陸地；跳過繞向錯誤（面積大於半個地球）的多邊形，避免整張圖被填滿
+  const land = { type: 'FeatureCollection', features: feature(t, t.objects.countries).features.filter(f => geoArea(f) < 2 * Math.PI) };
   const p = ll => P0(ll);
   const id = 'c' + Math.random().toString(36).slice(2, 8);
+  let landDef = false;
   const api = {
     w, h, p,
     base() {
@@ -154,6 +156,12 @@ export function geomap({ bbox, w, res = '50m', proj = 'mercator', borders = true
       const fs_ = feature(t, t.objects.countries).features.filter(f => set.has(f.properties.name));
       return fs_.map(f => `<path d="${path(f)}"${st({ fill: o.fill || C.redS, stroke: o.stroke || 'none', sw: o.sw || .8, op: o.op })}/>`).join('');
     },
+    // 只在陸地範圍內顯示的內容（例如把海岸內的行政區塗色）
+    onLand(body) {
+      const lid = id + 'L', def = landDef ? '' : `<defs><clipPath id="${lid}"><path d="${path(land)}"/></clipPath></defs>`;
+      landDef = true;
+      return `${def}<g clip-path="url(#${lid})">${body}</g>`;
+    },
     // 平面化的區域（手繪範圍，平滑）
     region(lls, o = {}) { return `<g clip-path="url(#${id})">${P(smooth(lls.map(p)), { fill: C.redS, stroke: 'none', op: .75, ...o })}</g>`; },
     poly(lls, o = {}) { return `<g clip-path="url(#${id})">${P('M' + lls.map(p).map(q => q.map(n).join(' ')).join('L') + 'Z', { fill: C.redS, stroke: 'none', ...o })}</g>`; },
@@ -168,7 +176,7 @@ export function geomap({ bbox, w, res = '50m', proj = 'mercator', borders = true
     // 折線，跨越地圖左右接縫時自動斷開（世界地圖用）
     lines(lls, o = {}) {
       const segs = [[]];
-      lls.map(p).forEach((q, i, a) => { if (i && Math.abs(q[0] - a[i - 1][0]) > w / 2) segs.push([]); segs[segs.length - 1].push(q); });
+      lls.map(p).forEach((q, i, a) => { if (i && Math.abs(q[0] - a[i - 1][0]) > w * .75) segs.push([]); segs[segs.length - 1].push(q); });
       return `<g clip-path="url(#${id})">` + segs.filter(s => s.length > 1).map(s => P('M' + s.map(q => q.map(n).join(' ')).join('L'), { stroke: C.red, sw: 2, ...o })).join('') + '</g>';
     },
     // 海溝：線＋三角形（三角形在上覆板塊那一側，side=1 或 -1）
