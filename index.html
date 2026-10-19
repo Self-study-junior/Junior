@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>國中自學筆記</title>
+<meta name="description" content="國中會考重點筆記：英語、生物、地科、歷史、公民，依單元整理的觀念、易混淆比較與關鍵名詞。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f2630'/%3E%3Ctext x='16' y='22' font-size='17' text-anchor='middle' fill='%23f6f4ee' font-family='serif' font-weight='900'%3E學%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/common.js"></script>
+<script src="assets/subjects.js"></script>
+<script src="data/summary.js"></script>
+</head>
+<body>
+<header class="bar"><div class="bar-in">
+  <a class="brand" href="./"><span class="logo">學</span>國中自學筆記</a>
+  <span class="grow"></span>
+  <span id="themeSlot"></span>
+</div></header>
+
+<div class="home">
+  <section class="hero">
+    <svg class="hero-deco" viewBox="0 0 460 380" aria-hidden="true">
+      <g transform="rotate(-8 230 190)">
+        <rect x="120" y="40" width="250" height="300" rx="18" fill="#2a7a5f" opacity=".16"/>
+        <rect x="95" y="58" width="250" height="300" rx="18" fill="#3d4f9a" opacity=".2"/>
+      </g>
+      <g transform="rotate(5 230 190)">
+        <rect x="150" y="30" width="250" height="300" rx="18" fill="#c7475a" opacity=".16"/>
+      </g>
+      <rect x="125" y="50" width="250" height="300" rx="18" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
+      <rect x="125" y="50" width="250" height="10" rx="5" fill="#127a86" opacity=".8"/>
+      <g stroke="var(--line)" stroke-width="2" stroke-linecap="round">
+        <line x1="160" y1="110" x2="340" y2="110"/><line x1="160" y1="140" x2="340" y2="140"/>
+        <line x1="160" y1="170" x2="310" y2="170"/><line x1="160" y1="200" x2="340" y2="200"/>
+        <line x1="160" y1="230" x2="280" y2="230"/><line x1="160" y1="260" x2="340" y2="260"/>
+        <line x1="160" y1="290" x2="320" y2="290"/>
+      </g>
+      <rect x="158" y="160" width="120" height="16" rx="3" fill="#fff1a8" opacity=".9"/>
+      <line x1="160" y1="170" x2="310" y2="170" stroke="var(--ink)" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="148" cy="110" r="4" fill="#8a5a2b"/><circle cx="148" cy="200" r="4" fill="#8a5a2b"/><circle cx="148" cy="260" r="4" fill="#8a5a2b"/>
+      <g transform="translate(330 250) rotate(38)">
+        <rect x="0" y="0" width="16" height="120" rx="3" fill="var(--ink)" opacity=".85"/>
+        <path d="M0 120 L8 140 L16 120 Z" fill="#e0aa6e"/>
+      </g>
+    </svg>
+    <span class="kicker">116 會考 · 自學重點筆記</span>
+    <h1>把課本讀<em>薄</em>，<br>把觀念讀<em>透</em>。</h1>
+    <p class="lead">依單元整理的重點筆記：每單元有核心觀念、易混淆比較、關鍵名詞卡，歷史附年代軸與史料線索，自然科附重要實驗。手機、平板、電腦都能讀。</p>
+    <label class="search">
+      <span hidden>搜尋全部筆記</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="搜尋全部筆記，例如：板塊、三權分立、被動語態" autocomplete="off">
+    </label>
+    <div class="results" id="results"></div>
+    <div id="cont"></div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <div id="groups"></div>
+
+  <section class="how">
+    <div><h4>先看單元總覽</h4><p>每單元開頭的摘要告訴你會考常考什麼，先抓方向再讀細節。</p></div>
+    <div><h4>易混淆觀念</h4><p>兩兩對照的表格加上「判斷關鍵」，專治看起來都對的選項。</p></div>
+    <div><h4>遮住定義自我測驗</h4><p>關鍵名詞卡可以一鍵遮住定義，點一下翻開，邊讀邊考自己。</p></div>
+    <div><h4>可以列印</h4><p>每個單元頁面都排好列印版面，印出來就是一份精華講義。</p></div>
+  </section>
+</div>
+
+<footer class="foot">
+  筆記內容整理自南一《超會考》、康軒《勝經》與翰林《大滿貫》國中複習講義，僅供個人自學使用。
+</footer>
+
+<script src="assets/home.js"></script>
+</body>
+</html>
