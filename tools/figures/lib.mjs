@@ -165,6 +165,25 @@ export function geomap({ bbox, w, res = '50m', proj = 'mercator', borders = true
       const [a, b] = [pts[pts.length - 2], pts[pts.length - 1]];
       return P(d, { stroke, sw, dash }) + (arrow ? A([[b[0] - (b[0] - a[0]) * .05, b[1] - (b[1] - a[1]) * .05], b], { stroke, sw: 0.01, size: 6 + sw * 1.5 }) : '');
     },
+    // 折線，跨越地圖左右接縫時自動斷開（世界地圖用）
+    lines(lls, o = {}) {
+      const segs = [[]];
+      lls.map(p).forEach((q, i, a) => { if (i && Math.abs(q[0] - a[i - 1][0]) > w / 2) segs.push([]); segs[segs.length - 1].push(q); });
+      return `<g clip-path="url(#${id})">` + segs.filter(s => s.length > 1).map(s => P('M' + s.map(q => q.map(n).join(' ')).join('L'), { stroke: C.red, sw: 2, ...o })).join('') + '</g>';
+    },
+    // 海溝：線＋三角形（三角形在上覆板塊那一側，side=1 或 -1）
+    trench(lls, o = {}) {
+      const { color = C.ink, side = 1, step = 22, size = 6 } = o, pts = lls.map(p);
+      let out = P('M' + pts.map(q => q.map(n).join(' ')).join('L'), { stroke: color, sw: 2 });
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [a, b] = [pts[i], pts[i + 1]], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
+        for (let t = step / 2; t < len; t += step) {
+          const x = a[0] + ux * t, y = a[1] + uy * t, nx = -uy * side, ny = ux * side;
+          out += `<path d="M${n(x - ux * size)} ${n(y - uy * size)}L${n(x + ux * size)} ${n(y + uy * size)}L${n(x + nx * size * 1.4)} ${n(y + ny * size * 1.4)}Z" fill="${color}"/>`;
+        }
+      }
+      return out;
+    },
     dot(ll, label, o = {}) {
       const [x, y] = p(ll), { dx = 6, dy = 0, anchor = dx < 0 ? 'end' : dx === 0 ? 'middle' : 'start', size = 13, color = C.ink, mark = 'dot', fill = C.ink, weight = 400 } = o;
       const m = mark === 'cap' ? R(x - 4, y - 4, 8, 8, { fill: C.red, stroke: '#fff', sw: 1.2, r: 1 })
