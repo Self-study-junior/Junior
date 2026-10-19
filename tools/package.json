@@ -1,0 +1,8 @@
+{
+  "name": "junior-tools",
+  "private": true,
+  "type": "module",
+  "description": "產生網站附圖（SVG）用的工具，網站本身不需要",
+  "scripts": { "figures": "node figures/build.mjs" },
+  "devDependencies": { "d3-geo": "3.1.1", "topojson-client": "3.1.0", "world-atlas": "2.0.2" }
+}

@@ -1,9 +1,11 @@
 // 從「會考衝刺站」單檔 HTML 抽出重點筆記（不含題庫），輸出 data/<科目>.js
 // 用法：node tools/extract.mjs <來源.html> <civics|history|biology|earth|english> [--images]
-//   --images  連同講義圖片一起輸出到 assets/img/<科目>/（圖片多為出版社講義掃描，公開網站請自行斟酌）
+//   --images  連同講義原圖一起輸出到 assets/img/<科目>/（出版社講義掃描，公開網站不建議）
+// 自己重繪的附圖在 assets/fig/<科目>/，由 tools/figures/build.mjs 產生，這裡會自動接上
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { applyFigures } from './figures/apply.mjs';
 
 const [src, id, ...flags] = process.argv.slice(2);
 const SUBJECTS = ['civics', 'history', 'biology', 'earth', 'english'];
@@ -50,6 +52,7 @@ if (id === 'english') {
     ...(u.timeline?.length ? { timeline: u.timeline } : {}),
     ...(u.sources?.length ? { sources: u.sources } : {}),
   }));
+  applyFigures(root, id, out);
 }
 const file = path.join(root, 'data', id + '.js');
 fs.writeFileSync(file, `window.NOTES=window.NOTES||{};window.NOTES[${JSON.stringify(id)}]=${JSON.stringify(out)};\n`);

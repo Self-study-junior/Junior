@@ -40,6 +40,7 @@
       <h2 class="blk-h" id="secs">重點整理 <small>${u.sections.length} 節</small></h2>
       <div class="secs">${u.sections.map((s, k) => `<section class="sec" id="s${k + 1}"><h3><span class="i">${String(k + 1).padStart(2, '0')}</span>${esc(s.heading)}</h3>
         <ul>${s.points.map(p => `<li>${point(p)}</li>`).join('')}</ul>
+        ${s.fig ? `<figure class="fig"><img src="${esc(s.fig.src)}" alt="${esc(s.fig.cap)}" loading="lazy"><figcaption>${esc(s.fig.cap)}</figcaption></figure>` : ''}
         ${s.img ? `<figure class="fig"><img src="${esc(s.img)}" alt="${esc(s.heading)}附圖" loading="lazy"></figure>` : ''}
         ${s.example ? `<div class="eg"><b>例</b>${esc(s.example)}</div>` : ''}</section>`).join('')}</div>
 
