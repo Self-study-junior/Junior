@@ -19,10 +19,11 @@
   // ---------- 單元清單 ----------
   const parts = [...new Set(D.map(u => u.part))];
   side.innerHTML = parts.map(p => `<h2>${esc(p)}</h2>` + D.filter(u => u.part === p)
-    .map(u => `<a class="ulink" href="#u${u.unit}" data-u="${u.unit}"><span class="n">${u.unit}</span><span>${esc(u.title)}</span></a>`).join('')).join('');
+    .map(u => `<a class="ulink" href="#u${u.unit}" data-u="${u.unit}"><span class="n">${u.unit}</span><span>${esc(u.title)}</span></a>`).join('')).join('')
+    + (window.CHRONO ? `<h2>總整理</h2><a class="ulink" href="#chrono" data-u="chrono"><span class="n">年</span><span>大事年表（臺灣・亞洲・歐洲）</span></a>` : '');
   pick.innerHTML = `<select aria-label="選擇單元">${parts.map(p => `<optgroup label="${esc(p)}">${D.filter(u => u.part === p)
-    .map(u => `<option value="${u.unit}">單元 ${u.unit}　${esc(u.title)}</option>`).join('')}</optgroup>`).join('')}</select>`;
-  pick.querySelector('select').onchange = e => { location.hash = 'u' + e.target.value; };
+    .map(u => `<option value="${u.unit}">單元 ${u.unit}　${esc(u.title)}</option>`).join('')}</optgroup>`).join('')}${window.CHRONO ? '<optgroup label="總整理"><option value="chrono">大事年表</option></optgroup>' : ''}</select>`;
+  pick.querySelector('select').onchange = e => { location.hash = e.target.value === 'chrono' ? 'chrono' : 'u' + e.target.value; };
 
   // ---------- 單元內容 ----------
   function unitHTML(u) {
@@ -63,7 +64,7 @@
       <div class="terms">${u.terms.map(t => `<button class="term"><b>${esc(t.term)}</b><span>${esc(t.def)}</span></button>`).join('')}</div>` : ''}
 
       <nav class="pager">${prev ? `<a href="#u${prev.unit}"><small>← 上一單元</small><b>${prev.unit}．${esc(prev.title)}</b></a>` : '<span></span>'}
-      ${next ? `<a class="nx" href="#u${next.unit}"><small>下一單元 →</small><b>${next.unit}．${esc(next.title)}</b></a>` : `<a class="nx" href="../"><small>讀完了！</small><b>回首頁看其他科目</b></a>`}</nav>`;
+      ${next ? `<a class="nx" href="#u${next.unit}"><small>下一單元 →</small><b>${next.unit}．${esc(next.title)}</b></a>` : window.CHRONO ? `<a class="nx" href="#chrono"><small>總整理 →</small><b>大事年表</b></a>` : `<a class="nx" href="../"><small>讀完了！</small><b>回首頁看其他科目</b></a>`}</nav>`;
   }
 
   // ---------- 科目內搜尋 ----------
@@ -96,8 +97,10 @@
   // ---------- 路由：#u3、#u3/s2、#u3/terms ----------
   let shown = null;
   function route() {
+    if (window.CHRONO && /^#chrono/.test(location.hash)) return routeChrono();
     const m = location.hash.match(/^#u(\d+)(?:\/(\w+))?/);
     const saved = store.get('unit.' + ID, D[0].unit);
+    if (!m && saved === 'chrono' && window.CHRONO) return routeChrono();
     const u = D.find(x => x.unit == (m ? m[1] : saved)) || D[0];
     if (shown !== u || lastQ) {
       view.innerHTML = unitHTML(u);
@@ -116,6 +119,22 @@
       const el = document.getElementById(m[2]);
       if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }));
     }
+  }
+  // 大事年表：#chrono、#chrono/e3（跳到某個時期）
+  function routeChrono() {
+    const anchor = location.hash.split('/')[1];
+    if (shown !== 'chrono' || lastQ) {
+      view.innerHTML = CHRONO.html(D);
+      CHRONO.bind(view);
+      shown = 'chrono';
+      side.querySelectorAll('.ulink').forEach(a => a.toggleAttribute('aria-current', a.dataset.u === 'chrono'));
+      pick.querySelector('select').value = 'chrono';
+      if (lastQ) { lastQ = ''; fin.value = ''; }
+      if (!anchor) window.scrollTo(0, 0);
+    }
+    store.set('unit.' + ID, 'chrono');
+    store.set('last', { id: ID, hash: '#chrono', title: '大事年表' });
+    if (anchor) { const el = document.getElementById(anchor); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })); }
   }
   function bind() {
     const hb = document.getElementById('hideDef');
