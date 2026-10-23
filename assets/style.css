@@ -295,10 +295,14 @@ table.vt td.z.show>*{color:inherit;background:none}
 }
 @media print{.cr-h{position:static}.cr-row{break-inside:avoid}}
 
-/* 首頁：方塊校園入口 */
-.world-cta{display:flex;align-items:center;gap:14px;margin-top:18px;max-width:560px;text-decoration:none;color:#fff;padding:12px 16px;border:2px solid #000;background:linear-gradient(#6bb846,#4d8c2e);box-shadow:inset 2px 2px 0 #9be07a,inset -2px -3px 0 #2f5d1a,var(--shadow);text-shadow:2px 2px 0 rgba(0,0,0,.45)}
-.world-cta:hover{filter:brightness(1.07)}
-.world-cta .cube{width:44px;height:44px;display:grid;place-items:center;font-size:24px;background:#8a5f3a;border:2px solid #000;box-shadow:inset 0 10px 0 #6dbb45}
-.world-cta b{display:block;font-size:18px;font-family:var(--sans);font-weight:900}
-.world-cta small{display:block;font-size:13px;opacity:.95}
-.world-cta .go{margin-left:auto;font-size:22px}
+
+/* 首頁：學習島入口 */
+.island-cta{display:flex;align-items:center;gap:14px;margin-top:18px;max-width:560px;text-decoration:none;color:var(--ink);padding:12px 18px;border-radius:18px;background:linear-gradient(120deg,#d8f0f2,#fbeadf);box-shadow:var(--shadow);border:1px solid var(--line)}
+.island-cta:hover{transform:translateY(-2px)}
+.island-cta .ico{width:48px;height:48px;flex:0 0 auto}
+.island-cta b{display:block;font-size:18px;font-weight:900;color:#c4532e}
+.island-cta small{display:block;font-size:13px;color:var(--muted)}
+.island-cta .go{margin-left:auto;font-size:22px;color:#c4532e}
+:root[data-theme="dark"] .island-cta{background:linear-gradient(120deg,#1d3b40,#3d2b22)}
+:root[data-theme="dark"] .island-cta b,:root[data-theme="dark"] .island-cta .go{color:#f5a07c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .island-cta{background:linear-gradient(120deg,#1d3b40,#3d2b22)}:root:not([data-theme="light"]) .island-cta b,:root:not([data-theme="light"]) .island-cta .go{color:#f5a07c}}

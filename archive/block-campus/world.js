@@ -14,7 +14,7 @@ const touch = matchMedia('(pointer: coarse)').matches;
 function hasGL() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
 if (!hasGL()) {
   const n = $('nogl'); n.hidden = false;
-  n.innerHTML = '<h2>這台裝置無法顯示 3D 畫面</h2><p>直接選科目：</p>' + SUBJ.filter(s => s.ready).map(s => `<a href="../${s.id}/">${s.name}</a>`).join('') + '<p><a href="../">回一般首頁</a></p>';
+  n.innerHTML = '<h2>這台裝置無法顯示 3D 畫面</h2><p>直接選科目：</p>' + SUBJ.filter(s => s.ready).map(s => `<a href="../../${s.id}/">${s.name}</a>`).join('') + '<p><a href="../../">回一般首頁</a></p>';
   throw new Error('no webgl');
 }
 
@@ -459,7 +459,7 @@ function enter(d) {
   leaving = true;
   store.set('last', { id: d.s.id, hash: '', title: d.s.name + '館' });
   $('fade').style.opacity = 1;
-  setTimeout(() => { location.href = `../${d.s.id}/`; }, 480);
+  setTimeout(() => { location.href = `../../${d.s.id}/`; }, 480);
 }
 addEventListener('pageshow', () => { leaving = false; $('fade').style.opacity = 0; });
 

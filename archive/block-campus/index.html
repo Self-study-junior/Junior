@@ -77,15 +77,15 @@ canvas#scene{display:block;width:100vw;height:100vh;touch-action:none}
   #top .title{font-size:14px}
 }
 </style>
-<script src="../assets/subjects.js"></script>
+<script src="../../assets/subjects.js"></script>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
 </head>
 <body>
 <canvas id="scene"></canvas>
 
 <div class="hud" id="top">
-  <span class="panel title">⛏ 方塊校園</span>
-  <a class="mcbtn" href="../">回一般首頁</a>
+  <span class="panel title">⛏ 方塊校園（已封存）</span>
+  <a class="mcbtn" href="../../">回一般首頁</a>
   <button class="mcbtn" id="reskin">換角色</button>
 </div>
 <div class="hud panel" id="mini"><canvas width="320" height="320"></canvas></div>
@@ -114,12 +114,12 @@ canvas#scene{display:block;width:100vw;height:100vh;touch-action:none}
         <h4>褲子</h4><div class="sw" data-k="pants"></div>
       </div>
     </div>
-    <div class="row"><button class="mcbtn go" id="play">開始探索</button><button class="mcbtn" id="rand">隨機外觀</button><a href="../">不玩了，直接看筆記 →</a></div>
+    <div class="row"><button class="mcbtn go" id="play">開始探索</button><button class="mcbtn" id="rand">隨機外觀</button><a href="../../">不玩了，直接看筆記 →</a></div>
     <div class="keys">電腦：WASD／方向鍵走路、拖曳滑鼠轉視角、空白鍵跳、E 進入。手機：左下搖桿走路、右側拖曳轉視角。</div>
   </div>
 </div>
 <div id="nogl" hidden></div>
 
-<script type="module" src="../assets/world.js"></script>
+<script type="module" src="./world.js"></script>
 </body>
 </html>
