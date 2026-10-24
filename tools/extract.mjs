@@ -1,5 +1,5 @@
 // 從「會考衝刺站」單檔 HTML 抽出重點筆記（不含題庫），輸出 data/<科目>.js
-// 用法：node tools/extract.mjs <來源.html> <civics|history|biology|earth|english> [--images]
+// 用法：node tools/extract.mjs <來源.html 或 .json> <civics|history|biology|earth|english> [--images]
 //   --images  連同講義原圖一起輸出到 assets/img/<科目>/（出版社講義掃描，公開網站不建議）
 // 自己重繪的附圖在 assets/fig/<科目>/，由 tools/figures/build.mjs 產生，這裡會自動接上
 import fs from 'node:fs';
@@ -16,9 +16,14 @@ if (!src || !SUBJECTS.includes(id)) {
 const withImages = flags.includes('--images');
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 
-const line = fs.readFileSync(src, 'utf8').split('\n').find(l => /^const (DATA|D) =/.test(l));
-if (!line) throw new Error('找不到 const DATA / const D');
-const raw = vm.runInNewContext('(' + line.replace(/^const \w+ =\s*/, '').replace(/;\s*$/, '') + ')');
+// 來源可以是「會考衝刺站」HTML，或同樣結構的 JSON 匯出檔
+let raw;
+if (src.endsWith('.json')) raw = JSON.parse(fs.readFileSync(src, 'utf8'));
+else {
+  const line = fs.readFileSync(src, 'utf8').split('\n').find(l => /^const (DATA|D) =/.test(l));
+  if (!line) throw new Error('找不到 const DATA / const D');
+  raw = vm.runInNewContext('(' + line.replace(/^const \w+ =\s*/, '').replace(/;\s*$/, '') + ')');
+}
 
 let out;
 if (id === 'english') {
