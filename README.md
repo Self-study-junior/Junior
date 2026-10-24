@@ -19,4 +19,4 @@ tools/extract.mjs      從「會考衝刺站」HTML 抽出筆記的工具
 
 ## 學習島
 
-`island/` 是 3D 入口：一座六角島一個科目，點島可看單元並走進筆記（Three.js，`assets/island.js`）。舊的「方塊校園」已封存在 `archive/block-campus/`，首頁不再連結。
+`island/` 是 3D 入口：一座六角島一個科目，島上每個物件代表一個單元（英語為一個類別），點物件可看單元重點並跳到該單元（Three.js，`assets/island.js`；各單元的物件在 `assets/island-landmarks.js`）。舊的「方塊校園」已封存在 `archive/block-campus/`，首頁不再連結。

@@ -71,8 +71,13 @@ for (const f of fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('
   for (const [k, d] of Object.entries(ctx.window.NOTES)) {
     summary[k] = Array.isArray(d)
       ? { units: d.length, parts: [...new Set(d.map(u => u.part))], sections: d.reduce((n, u) => n + u.sections.length, 0),
-          terms: d.reduce((n, u) => n + u.terms.length, 0), confusions: d.reduce((n, u) => n + u.confusions.length, 0) }
-      : { vocab: d.vocab.length, polysemy: d.polysemy.length, grammar: d.grammar.length, strategies: d.strategies.length };
+          terms: d.reduce((n, u) => n + u.terms.length, 0), confusions: d.reduce((n, u) => n + u.confusions.length, 0),
+          // 學習島用：各單元的標題、簡介與重點標題
+          list: d.map(u => ({ n: u.unit, t: u.title, p: u.part, s: u.summary.length > 110 ? u.summary.slice(0, 108) + '…' : u.summary, h: u.sections.map(x => x.heading) })) }
+      : { vocab: d.vocab.length, polysemy: d.polysemy.length, grammar: d.grammar.length, strategies: d.strategies.length,
+          topics: Object.entries(d.vocab.reduce((m, v) => (m[v.topic] = (m[v.topic] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, c]),
+          gram: [...new Set(d.grammar.map(g => g.gt))].sort((a, b) => a - b).map(gt => [gt, d.grammar.filter(g => g.gt === gt).map(g => g.heading)]),
+          strat: ['單字', '閱讀', '聽力'].map(a => [a, d.strategies.filter(s => s.area === a).map(s => s.name)]) };
   }
 }
 fs.writeFileSync(path.join(root, 'data/summary.js'), `window.SUMMARY=${JSON.stringify(summary)};\n`);

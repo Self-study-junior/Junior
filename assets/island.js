@@ -1,6 +1,7 @@
 // 學習島：粉彩低多邊形風格的六角島群，每座島是一個科目
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { LANDMARKS } from './island-landmarks.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -44,17 +45,17 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#bfe4ea');
-scene.fog = new THREE.Fog('#bfe4ea', 120, 260);
-const camera = new THREE.PerspectiveCamera(34, 1, .5, 600);
+scene.fog = new THREE.Fog('#bfe4ea', 230, 480);
+const camera = new THREE.PerspectiveCamera(34, 1, .5, 1000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = .08;
-controls.minDistance = 16; controls.maxDistance = 150; controls.maxPolarAngle = 1.22; controls.minPolarAngle = .35;
+controls.minDistance = 9; controls.maxDistance = 280; controls.maxPolarAngle = 1.22; controls.minPolarAngle = .35;
 controls.screenSpacePanning = false; controls.rotateSpeed = .6; controls.zoomSpeed = .8;
 scene.add(new THREE.HemisphereLight('#fff4e6', '#7fb6c2', 1.15));
 const sun = new THREE.DirectionalLight('#fff1dc', 2.1);
-sun.position.set(-40, 70, 35); sun.castShadow = true;
-Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 10, far: 200 });
-sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0005; sun.shadow.normalBias = .04;
+sun.position.set(-70, 120, 60); sun.castShadow = true;
+Object.assign(sun.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 340 });
+sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -.0005; sun.shadow.normalBias = .04;
 scene.add(sun);
 
 let seed = 11;
@@ -89,8 +90,8 @@ function house(x, z, rot = 0, s = 1, wall = PAL.white, roof = PAL.roof) {
   g.add(box(.28, .28, .05, PAL.glass, -.42, .45, .61)); g.add(box(.28, .28, .05, PAL.glass, .42, .45, .61));
   return g;
 }
-function person(x, z, c = PAL.blue) {
-  const g = new THREE.Group(); g.position.set(x, 0, z);
+function person(x, z, c = PAL.blue, s = 1) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s);
   g.add(cyl(.14, .17, .5, c, 0, 0, 0, 8)); g.add(ball(.15, '#f3d2b3', 0, .66, 0, 1)); g.add(cyl(.16, .16, .06, PAL.dark, 0, .74, 0, 8));
   return g;
 }
@@ -106,7 +107,7 @@ function textTex(text, { w = 256, h = 128, bg = PAL.white, fg = PAL.dark, size =
 const animators = [];  // 每幀更新的東西
 
 // ---------- 六角島 ----------
-const R = 6.4, AP = R * Math.sqrt(3) / 2;   // 外接半徑、邊心距
+const R = 12, AP = R * Math.sqrt(3) / 2;   // 外接半徑、邊心距
 function hexIsland(theme, small = false) {
   const g = new THREE.Group();
   const h = small ? .8 : 1.1;
@@ -121,7 +122,7 @@ function hexIsland(theme, small = false) {
 // 每座島的內容
 const BUILD = {
   hub(g) {
-    const y = g.userData.top; const L = new THREE.Group(); L.position.y = y; g.add(L);
+    const L = lay(g, 1.85);
     L.add(cyl(3.1, 3.1, .08, PAL.stone, 0, 0, 0, 24));
     L.add(cyl(1.1, 1.25, .35, PAL.stoneD, 0, .08, 0, 16)); L.add(cyl(.95, .95, .05, PAL.sea, 0, .42, 0, 16));
     const jet = cyl(.08, .14, .9, '#e8f7fb', 0, .4, 0, 8); L.add(jet); animators.push(t => { jet.scale.y = .85 + Math.sin(t * 4) * .15; });
@@ -143,129 +144,6 @@ const BUILD = {
     const cols = [PAL.blue, PAL.red, PAL.yellow, '#8e6ad8', PAL.leafD];
     for (let i = 0; i < 5; i++) { const p = person(0, 0, cols[i]); L.add(p); const off = i / 5 * Math.PI * 2, r = 1.9 + (i % 2) * .5, sp = (i % 2 ? 1 : -1) * (.25 + i * .03);
       animators.push(t => { const a = off + t * sp; p.position.set(Math.cos(a) * r, Math.abs(Math.sin(t * 6 + i)) * .05, Math.sin(a) * r); p.rotation.y = -a + (sp > 0 ? 0 : Math.PI); }); }
-  },
-  english(g) {
-    const L = lay(g);
-    // 鐘塔
-    const tw = new THREE.Group(); tw.position.set(-1.6, 0, -1.8); L.add(tw);
-    tw.add(box(1.4, 4.2, 1.4, PAL.cream, 0, 0, 0)); tw.add(box(1.6, .3, 1.6, PAL.stoneD, 0, 4.2, 0)); tw.add(box(1.2, 1, 1.2, PAL.cream, 0, 4.5, 0));
-    tw.add(rot(cone(.95, 1.6, '#3f7f86', 0, 5.5, 0, 4), 'y', Math.PI / 4));
-    const face = mesh(new THREE.CircleGeometry(.48, 20), PAL.white, 0, 3.4, .71); tw.add(face);
-    const hand = box(.06, .38, .02, PAL.dark, 0, 3.4, .73); tw.add(hand); const hand2 = box(.05, .28, .02, PAL.dark, 0, 3.4, .73); tw.add(hand2);
-    hand.geometry.translate(0, -.0, 0);
-    animators.push(t => { hand.rotation.z = -t * .8; hand2.rotation.z = -t * .07; });
-    // 字母方塊
-    [['A', PAL.red, 1.4, .4], ['B', PAL.yellow, 2.4, .1], ['C', PAL.blue, 1.9, 1.2], ['D', '#8e6ad8', 2.0, .6]].forEach(([ch, c, x, z], i) => {
-      const t = textTex(ch, { w: 128, h: 128, size: 92, bg: c, fg: '#fff' });
-      const m = new THREE.Mesh(new THREE.BoxGeometry(.8, .8, .8), new THREE.MeshStandardMaterial({ map: t, roughness: .9 }));
-      m.position.set(x, i === 3 ? 1.2 : .4, z); m.rotation.y = rr(-.5, .5); m.castShadow = m.receiveShadow = true; L.add(m);
-    });
-    // 紅色電話亭
-    const ph = new THREE.Group(); ph.position.set(-3.4, 0, 1.4); L.add(ph);
-    ph.add(box(.7, 1.6, .7, PAL.red, 0, 0, 0)); ph.add(box(.78, .18, .78, PAL.roofD, 0, 1.6, 0)); ph.add(box(.5, .7, .02, PAL.glass, 0, .7, .36));
-    // 書本堆
-    [[PAL.blue, 0], [PAL.yellow, .18], [PAL.red, .36]].forEach(([c, y], i) => L.add(rot(box(1.1 - i * .1, .18, .75, c, .3, y, 2.8), 'y', i * .2)));
-    L.add(house(3.4, -2.2, -.5, .9, PAL.cream, '#3f7f86'));
-    for (const [x, z] of [[-3.8, -1.2], [3.6, 2.4], [-1, 3.8], [.8, -3.6]]) L.add(tree(x, z, .95));
-    L.add(flowers(-2.4, 3, 6));
-  },
-  biology(g) {
-    const L = lay(g);
-    // 溫室
-    const gh = new THREE.Group(); gh.position.set(-1.4, 0, -1.6); L.add(gh);
-    gh.add(box(3, .2, 2, PAL.stone, 0, 0, 0));
-    gh.add(box(2.8, 1.4, 1.8, PAL.glass, 0, .2, 0, )); gh.children[1].material = new THREE.MeshStandardMaterial({ color: PAL.glass, transparent: true, opacity: .55, roughness: .2 });
-    gh.add(prism(2.9, .9, 1.9, PAL.glass, 0, 1.6, 0)); gh.children[2].material = gh.children[1].material;
-    for (let i = -1; i <= 1; i++) gh.add(ball(.32, PAL.leaf, i * .8, .6, 0, 0));
-    // DNA 雙股螺旋
-    const dna = new THREE.Group(); dna.position.set(2.2, .2, -.8); L.add(dna);
-    for (let i = 0; i < 14; i++) { const a = i * .55, y = i * .25; dna.add(ball(.13, PAL.red, Math.cos(a) * .5, y, Math.sin(a) * .5, 0)); dna.add(ball(.13, PAL.blue, -Math.cos(a) * .5, y, -Math.sin(a) * .5, 0));
-      if (i % 2 === 0) { const r = box(1, .05, .05, PAL.white, 0, y - .025, 0); r.rotation.y = -a; dna.add(r); } }
-    dna.add(cyl(.5, .6, .2, PAL.stoneD, 0, -.2, 0, 10));
-    animators.push(t => { dna.rotation.y = t * .5; });
-    // 大花、蘑菇
-    const fl = new THREE.Group(); fl.position.set(1.6, 0, 2.4); L.add(fl);
-    fl.add(cyl(.06, .08, 1.3, PAL.leafD, 0, 0, 0, 6));
-    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; fl.add(ball(.28, PAL.pink, Math.cos(a) * .32, 1.4, Math.sin(a) * .32, 0)); }
-    fl.add(ball(.2, PAL.yellow, 0, 1.45, 0, 0));
-    for (const [x, z, s] of [[-2.8, 2.2, .5], [-2.3, 2.7, .35], [-3.2, 2.9, .4]]) { L.add(cyl(.08 * s * 2, .1 * s * 2, .5 * s * 2, PAL.white, x, 0, z, 6)); L.add(mesh(new THREE.SphereGeometry(.5 * s, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), PAL.red, x, s, z)); }
-    // 蝴蝶
-    const bf = new THREE.Group(); L.add(bf); const w1 = box(.25, .02, .18, PAL.yellow, -.13, 0, 0), w2 = box(.25, .02, .18, PAL.yellow, .13, 0, 0); bf.add(w1, w2);
-    animators.push(t => { bf.position.set(Math.cos(t * .7) * 2.5, 2 + Math.sin(t * 2) * .3, Math.sin(t * .7) * 2.5); w1.rotation.z = Math.sin(t * 18) * .8; w2.rotation.z = -w1.rotation.z; bf.rotation.y = -t * .7; });
-    for (const [x, z] of [[-3.8, -.4], [3.6, 1.2], [3.2, -2.8], [-.2, 3.8], [-4, 1.4], [.4, -3.8], [2.6, 3.4]]) L.add(tree(x, z, rr(.8, 1.1)));
-    L.add(flowers(-.6, 1.6, 8));
-  },
-  earth(g) {
-    const L = lay(g);
-    // 火山
-    const vol = new THREE.Group(); vol.position.set(-1.5, 0, -1.2); L.add(vol);
-    vol.add(cyl(.7, 2.3, 2.6, '#a9876a', 0, 0, 0, 9)); vol.add(cyl(.55, .7, .15, PAL.lava, 0, 2.55, 0, 9));
-    for (let i = 0; i < 4; i++) { const sm = ball(.35, '#eeeeee', 0, 0, 0, 0); sm.material = new THREE.MeshStandardMaterial({ color: '#f4f2ee', transparent: true, opacity: .8, flatShading: true }); vol.add(sm);
-      animators.push(t => { const k = (t * .35 + i / 4) % 1; sm.position.set(Math.sin(k * 5 + i) * .3, 2.8 + k * 2.4, Math.cos(k * 4) * .3); sm.scale.setScalar(.6 + k * 1.4); sm.material.opacity = .85 * (1 - k); }); }
-    // 地層
-    const st = new THREE.Group(); st.position.set(2.4, 0, -1.6); L.add(st);
-    ['#d9b98c', '#b98f62', '#e7d2a8', '#9a7a5a', '#cfb08a'].forEach((c, i) => st.add(box(1.8 - i * .12, .3, 1.2 - i * .06, c, 0, i * .3, 0)));
-    // 天文台
-    const ob = new THREE.Group(); ob.position.set(1.6, 0, 2.2); L.add(ob);
-    ob.add(cyl(.9, .9, 1.1, PAL.white, 0, 0, 0, 14)); ob.add(mesh(new THREE.SphereGeometry(.9, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#cfd7e3', 0, 1.1, 0));
-    const scope = cyl(.12, .16, 1.1, PAL.dark, .3, 1.5, 0, 8); scope.rotation.z = -.8; ob.add(scope);
-    // 風車
-    for (const [x, z] of [[-3.6, 1.6], [-2.4, 3.2]]) { const wm = new THREE.Group(); wm.position.set(x, 0, z); L.add(wm); wm.add(cyl(.06, .1, 2.6, PAL.white, 0, 0, 0, 6));
-      const hub = new THREE.Group(); hub.position.set(0, 2.6, .12); wm.add(hub); for (let i = 0; i < 3; i++) { const b = box(.1, 1.1, .04, PAL.white, 0, 0, 0); b.geometry.translate(0, .0, 0); b.position.y = 0; const p = new THREE.Group(); p.rotation.z = i * 2.094; b.position.y = .55; p.add(b); hub.add(p); }
-      animators.push(t => { hub.rotation.z = t * 2.2; }); }
-    // 岩石
-    for (const [x, z, s] of [[3.6, .4, .5], [3.2, 1, .3], [-.4, 3.6, .4]]) L.add(mesh(new THREE.DodecahedronGeometry(s, 0), PAL.stoneD, x, s * .6, z));
-    for (const [x, z] of [[3.8, -3], [-3.8, -2.6], [.2, -3.8]]) L.add(tree(x, z, .9, 'pine'));
-  },
-  history(g) {
-    const L = lay(g);
-    // 塔（東方）
-    const pg = new THREE.Group(); pg.position.set(-1.8, 0, -1.4); L.add(pg);
-    pg.add(box(1.8, .3, 1.8, PAL.stone, 0, 0, 0));
-    for (let i = 0; i < 4; i++) { const y = .3 + i * 1, w = 1.3 - i * .18; pg.add(box(w, .75, w, PAL.cream, 0, y, 0)); pg.add(rot(cyl((w + .7) * .72, (w + .9) * .72, .25, '#3d4f9a', 0, y + .75, 0, 4), 'y', Math.PI / 4)); }
-    pg.add(cone(.12, .8, PAL.yellow, 0, 4.3, 0, 6));
-    // 城堡塔（西方）
-    const cs = new THREE.Group(); cs.position.set(2.4, 0, -1.4); L.add(cs);
-    cs.add(cyl(.8, .85, 2.4, PAL.stone, 0, 0, 0, 10));
-    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; cs.add(box(.22, .3, .22, PAL.stone, Math.cos(a) * .72, 2.4, Math.sin(a) * .72)); }
-    cs.add(cone(.75, 1.3, PAL.red, 0, 2.7, 0, 10)); cs.add(box(.36, .6, .05, PAL.woodD, 0, 0, .84));
-    const flag = box(.5, .3, .02, PAL.yellow, .25, 4.2, 0); cs.add(cyl(.02, .02, .8, PAL.dark, 0, 3.8, 0, 4)); cs.add(flag);
-    animators.push(t => { flag.rotation.y = Math.sin(t * 3) * .3; });
-    // 希臘柱遺跡
-    const ru = new THREE.Group(); ru.position.set(1.2, 0, 2.4); L.add(ru);
-    ru.add(box(2.4, .2, 1.2, PAL.white, 0, 0, 0)); [[-.9, 1.4], [-.3, 1.4], [.3, .9], [.9, 1.4]].forEach(([x, h]) => ru.add(cyl(.14, .16, h, PAL.white, x, .2, 0, 10)));
-    ru.add(box(1.4, .18, .5, PAL.white, -.6, 1.6, 0));
-    // 帆船
-    const sh = new THREE.Group(); sh.position.set(-3.2, 0, 2.4); sh.rotation.y = .6; L.add(sh);
-    sh.add(box(1.8, .4, .6, PAL.woodD, 0, 0, 0)); sh.add(cyl(.04, .04, 1.6, PAL.wood, 0, .4, 0, 4)); sh.add(prism(.9, 1.2, .04, PAL.white, .1, .6, 0));
-    // 卷軸
-    L.add(rot(cyl(.12, .12, .9, PAL.cream, -.6, .12, 3.6, 10), 'z', Math.PI / 2));
-    for (const [x, z] of [[-3.8, -.4], [3.8, 1.2], [.2, -3.8], [3.4, 3]]) L.add(tree(x, z, .9));
-  },
-  civics(g) {
-    const L = lay(g);
-    // 市政廳
-    const ch = new THREE.Group(); ch.position.set(0, 0, -1.8); L.add(ch);
-    ch.add(box(4, .3, 2.2, PAL.stone, 0, 0, 0)); ch.add(box(3.6, 1.8, 1.8, PAL.white, 0, .3, 0));
-    for (let i = -3; i <= 3; i++) ch.add(cyl(.1, .1, 1.8, PAL.cream, i * .52, .3, 1.0, 8));
-    ch.add(prism(3.9, .7, 2.2, PAL.cream, 0, 2.1, 0));
-    ch.add(cyl(.7, .7, .6, PAL.white, 0, 2.6, -.2, 12)); ch.add(mesh(new THREE.SphereGeometry(.7, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#c7475a', 0, 3.2, -.2));
-    // 旗杆
-    L.add(cyl(.04, .05, 3.2, PAL.dark, -2.6, 0, 1, 6)); const fl = box(.8, .5, .02, PAL.red, -2.2, 2.75, 1); L.add(fl);
-    animators.push(t => { fl.scale.x = .92 + Math.sin(t * 4) * .08; });
-    // 投票箱
-    const bb = new THREE.Group(); bb.position.set(1.8, 0, 1.6); L.add(bb);
-    bb.add(box(.9, .8, .7, PAL.white, 0, 0, 0)); bb.add(box(.5, .04, .1, PAL.dark, 0, .8, 0));
-    const paper = box(.36, .02, .5, PAL.yellow, 0, 1.1, 0); bb.add(paper);
-    animators.push(t => { const k = (t * .5) % 1; paper.position.y = 1.5 - k * .7; paper.rotation.y = k * 3; paper.visible = k < .9; });
-    // 天平
-    const sc = new THREE.Group(); sc.position.set(-1, 0, 2.2); L.add(sc);
-    sc.add(cyl(.3, .4, .15, PAL.yellow, 0, 0, 0, 8)); sc.add(cyl(.04, .04, 1.4, PAL.yellow, 0, .15, 0, 6));
-    const beam = new THREE.Group(); beam.position.y = 1.55; sc.add(beam); beam.add(box(1.4, .05, .05, PAL.yellow, 0, -.025, 0));
-    for (const x of [-.65, .65]) { beam.add(cyl(.01, .01, .4, PAL.dark, x, -.4, 0, 4)); beam.add(cyl(.25, .2, .05, PAL.yellow, x, -.45, 0, 10)); }
-    animators.push(t => { beam.rotation.z = Math.sin(t * 1.2) * .12; });
-    for (const [x, z] of [[-3.8, -1], [3.8, -.4], [3.4, 2.8], [-3.4, 2.8], [.6, 3.8]]) L.add(tree(x, z, .9, 'round'));
-    L.add(bench(.6, .5, 0)); L.add(lamp(2.4, -.2)); L.add(lamp(-2.4, -.2));
   },
   // ---- 整理中的島：施工中＋代表物 ----
   soon(g, id) {
@@ -290,10 +168,69 @@ const BUILD = {
   },
 };
 const rot = (m, axis, v) => { m.rotation[axis] = v; return m; };
-function lay(g) { const L = new THREE.Group(); L.position.y = g.userData.top; g.add(L); return L; }
+function lay(g, sc = 1.75) { const L = new THREE.Group(); L.position.y = g.userData.top; L.scale.setScalar(sc); g.add(L); return L; }
+
+// ---------- 科目島：每個單元／類別一個地標 ----------
+const tint = (c, f) => '#' + new THREE.Color(c).lerp(new THREE.Color('#ffffff'), f).getHexString();
+function numSprite(text, color) {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(64, 64, 58, 0, Math.PI * 2); g.fill();
+  g.lineWidth = 8; g.strokeStyle = color; g.stroke();
+  g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `900 ${text.length > 2 ? 44 : 60}px "Noto Sans TC",sans-serif`; g.fillText(text, 64, 68);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: true })); s.scale.set(.9, .9, 1); return s;
+}
+function slotsFor(defs) {
+  const big = defs.filter(d => !d.small), small = defs.filter(d => d.small), out = [];
+  const ring = (list, r, off) => list.forEach((d, i) => { const a = off + i / list.length * Math.PI * 2; out.push([d, Math.sin(a) * r, -Math.cos(a) * r]); });
+  if (small.length) { ring(big, 4.7, 0); ring(small, 9, Math.PI / small.length); return out; }
+  const n = defs.length;
+  if (n <= 6) ring(defs, 6.4, 0);
+  else if (n <= 10) { ring(defs.slice(0, 3), 4.1, 0); ring(defs.slice(3), 8.3, Math.PI / (n - 3)); }
+  else { ring(defs.slice(0, 5), 4.5, 0); ring(defs.slice(5), 8.5, Math.PI / (n - 5)); }
+  return out;
+}
+const kit = { THREE, PAL, M, mesh, box, cyl, cone, ball, prism, house, person, textTex, A: f => animators.push(f) };
+function buildSubject(g, id, theme, it) {
+  const L = lay(g, 1);
+  const defs = LANDMARKS[id] || [];
+  // 中央小廣場＋科目名稱碑
+  L.add(cyl(1.7, 1.8, .12, PAL.stone, 0, 0, 0, 18));
+  // 直書的科目名稱（每一面都只寫一次）
+  const vtex = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 320; const x = c.getContext('2d'); x.fillStyle = tint(theme.c, .15); x.fillRect(0, 0, 128, 320);
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 74px "Noto Sans TC",sans-serif'; [...it.s.name].forEach((ch, i, a) => x.fillText(ch, 64, 160 + (i - (a.length - 1) / 2) * 86));
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({ map: t, roughness: .9 }); })();
+  const ob = new THREE.Mesh(new THREE.BoxGeometry(.9, 2.2, .9), [0, 1, 2, 3, 4, 5].map(i => i === 2 || i === 3 ? M(theme.c) : vtex));
+  ob.position.y = 1.2; ob.castShadow = true; L.add(ob); L.add(cone(.62, .6, theme.c, 0, 2.3, 0, 4)).children.at(-1).rotation.y = Math.PI / 4;
+  // 環狀步道
+  const ringGeo = new THREE.RingGeometry(6.35, 7.05, 48); ringGeo.rotateX(-Math.PI / 2);
+  const walk = new THREE.Mesh(ringGeo, M(PAL.stone)); walk.position.y = .02; walk.receiveShadow = true; L.add(walk);
+  it.landmarks = [];
+  for (const [d, x, z] of slotsFor(defs)) {
+    const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = Math.atan2(x, z); L.add(w);
+    const few = defs.length <= 6, pr = d.small ? 1.05 : few ? 2.1 : 1.55;
+    const plinth = cyl(pr, pr + .1, .3, tint(theme.c, .55), 0, 0, 0, 16); w.add(plinth);
+    const inner = new THREE.Group(); inner.position.y = .3; if (few) inner.scale.setScalar(1.4); w.add(inner);
+    d.build({ ...kit, g: inner });
+    const sp = numSprite(d.n ? String(d.n) : d.key === 'chrono' ? '年' : '★', theme.c); sp.position.set(0, .55, pr + .15); w.add(sp);
+    const lm = { def: d, it, group: w, plinth, sprite: sp };
+    w.traverse(m => { m.userData.lm = lm; });
+    it.landmarks.push(lm);
+  }
+  // 空地種樹與花
+  const taken = slotsFor(defs).map(([d, x, z]) => [x, z, d.small ? 1.9 : defs.length <= 6 ? 3.1 : 2.5]);
+  for (let i = 0, made = 0; i < 260 && made < 26; i++) {
+    const x = rr(-10, 10), z = rr(-10, 10);
+    if (Math.abs(x) * .5 + Math.abs(z) * .866 > AP - 1.3 || Math.abs(x) > AP - 1.3) continue;
+    if (Math.hypot(x, z) < 2.6 || (Math.hypot(x, z) > 6.1 && Math.hypot(x, z) < 7.3)) continue;
+    if (taken.some(([a, b, r]) => Math.hypot(x - a, z - b) < r)) continue;
+    taken.push([x, z, 1.1]); made++;
+    L.add(made % 4 === 0 ? flowers(x, z, 6) : tree(x, z, rr(.75, 1.05)));
+  }
+}
 
 // ---------- 配置：中央島＋兩圈 ----------
-const D = 2 * AP + 2.4;
+const D = 2 * AP + 3.2;
 const RING1 = [['english', 0], ['chinese', 60], ['biology', 120], ['earth', 180], ['history', 240], ['civics', 300]];
 const RING2 = [['math', 90], ['physchem', 150], ['geography', 270]];
 const islands = [];   // { id, s, group, pos, ready, num }
@@ -303,9 +240,9 @@ function place(id, ang, dist) {
   if (!s) return;
   const theme = THEME[id] || THEME.chinese, small = !s.ready && id !== 'hub';
   const g = hexIsland(theme, small); g.position.copy(pos);
-  (BUILD[id] || BUILD.soon)(g, id);
+  const it = { id, s, group: g, pos, ready: s.ready, theme, bob: rnd() * 6, landmarks: [] };
+  if (LANDMARKS[id] && s.ready) buildSubject(g, id, theme, it); else (BUILD[id] || BUILD.soon)(g, id);
   shadow(g); scene.add(g);
-  const it = { id, s, group: g, pos, ready: s.ready, theme, bob: rnd() * 6 };
   g.traverse(m => { m.userData.island = it; });
   islands.push(it);
 }
@@ -318,7 +255,7 @@ let n = 0; for (const s of SUBJ) { const it = islands.find(i => i.id === s.id); 
 // 橋
 function bridge(a, b) {
   const d = new THREE.Vector3().subVectors(b, a), len = d.length() - 2 * AP + .8, mid = a.clone().add(b).multiplyScalar(.5);
-  const g = new THREE.Group(); g.position.copy(mid); g.rotation.y = Math.atan2(d.x, d.z);
+  const g = new THREE.Group(); g.position.copy(mid); g.rotation.y = Math.atan2(d.x, d.z); g.scale.set(1.5, 1, 1);
   const top = .45;
   g.add(box(1.4, .14, len, PAL.wood, 0, top, 0));
   for (let z = -len / 2 + .2; z < len / 2; z += .45) g.add(box(1.5, .05, .12, PAL.woodD, 0, top + .14, z));
@@ -334,7 +271,7 @@ bridge(P('physchem'), P('biology')); bridge(P('physchem'), P('earth'));
 bridge(P('geography'), P('history')); bridge(P('geography'), P('civics'));
 
 // ---------- 海、遠景、裝飾 ----------
-const seaGeo = new THREE.PlaneGeometry(520, 520, 90, 90); seaGeo.rotateX(-Math.PI / 2);
+const seaGeo = new THREE.PlaneGeometry(900, 900, 110, 110); seaGeo.rotateX(-Math.PI / 2);
 const seaBase = seaGeo.attributes.position.array.slice();
 const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({ color: PAL.sea, roughness: .55, metalness: .05, flatShading: true }));
 sea.position.y = -.35; sea.receiveShadow = true; scene.add(sea);
@@ -345,8 +282,8 @@ animators.push(t => {
 });
 // 遠山
 for (let i = 0; i < 26; i++) {
-  const a = -Math.PI * .95 + i / 25 * Math.PI * .9 - .1, r = rr(150, 190);
-  const h = rr(18, 42), m = cone(rr(20, 34), h, [PAL.grassD, '#a8c98c', '#9fbf86'][i % 3], Math.cos(a) * r, -1, Math.sin(a) * r, 7);
+  const a = -Math.PI * .95 + i / 25 * Math.PI * .9 - .1, r = rr(260, 320);
+  const h = rr(30, 70), m = cone(rr(34, 56), h, [PAL.grassD, '#a8c98c', '#9fbf86'][i % 3], Math.cos(a) * r, -1, Math.sin(a) * r, 7);
   m.castShadow = false; scene.add(m);
 }
 // 小島
@@ -360,27 +297,27 @@ function islet(x, z, kind) {
   if (kind === 'umbrella') { for (const [ux, c] of [[-.6, PAL.red], [.7, PAL.yellow]]) { g.add(cyl(.03, .03, 1.2, PAL.dark, ux, 0, 0, 4)); g.add(cone(.7, .35, c, ux, 1.1, 0, 8)); } g.add(box(.5, .05, .9, PAL.blue, 0, .15, .6)); }
   shadow(g); scene.add(g); return g;
 }
-[[-34, -8, 'tree'], [36, -14, 'tree'], [30, 26, 'umbrella'], [-30, 22, 'rock'], [40, 8, 'light'], [-40, -24, 'tree'], [6, 40, 'tree'], [-12, -42, 'rock'], [22, -38, 'tree']].forEach(a => islet(...a));
+[[-62, -12, 'tree'], [64, -24, 'tree'], [54, 46, 'umbrella'], [-54, 40, 'rock'], [70, 14, 'light'], [-70, -42, 'tree'], [10, 70, 'tree'], [-22, -74, 'rock'], [40, -66, 'tree'], [-40, 66, 'light']].forEach(a => islet(...a));
 // 帆船與浮標
 for (let i = 0; i < 6; i++) {
-  const g = new THREE.Group(); const r = rr(34, 50), a = rr(0, Math.PI * 2);
+  const g = new THREE.Group(); const r = rr(62, 90), a = rr(0, Math.PI * 2);
   g.add(box(1.4, .3, .5, [PAL.white, PAL.red, PAL.blue][i % 3], 0, -.1, 0)); g.add(cyl(.03, .03, 1.4, PAL.dark, 0, .2, 0, 4)); g.add(prism(.8, 1.1, .03, PAL.white, .1, .3, 0));
   shadow(g); scene.add(g);
   animators.push(t => { const k = a + t * .02 * (i % 2 ? 1 : -1); g.position.set(Math.cos(k) * r, Math.sin(t * 1.5 + i) * .08, Math.sin(k) * r); g.rotation.y = -k + (i % 2 ? 0 : Math.PI); g.rotation.z = Math.sin(t * 1.2 + i) * .06; });
 }
-for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + .2, r = 31; const b = new THREE.Group(); b.add(cyl(.2, .28, .6, i % 2 ? PAL.red : PAL.white, 0, -.3, 0, 8)); b.add(cyl(.03, .03, .7, PAL.dark, 0, .3, 0, 4)); b.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(b); animators.push(t => { b.position.y = Math.sin(t * 2 + i) * .1; b.rotation.z = Math.sin(t * 1.3 + i) * .1; }); }
+for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + .2, r = 56; const b = new THREE.Group(); b.add(cyl(.2, .28, .6, i % 2 ? PAL.red : PAL.white, 0, -.3, 0, 8)); b.add(cyl(.03, .03, .7, PAL.dark, 0, .3, 0, 4)); b.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(b); animators.push(t => { b.position.y = Math.sin(t * 2 + i) * .1; b.rotation.z = Math.sin(t * 1.3 + i) * .1; }); }
 // 雲
 for (let i = 0; i < 10; i++) {
   const g = new THREE.Group(); for (let k = 0; k < 4; k++) g.add(ball(rr(1.8, 3.2), PAL.white, k * 2.2 - 3, rr(-.3, .6), rr(-1, 1), 1));
   g.traverse(m => { if (m.isMesh) { m.material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 1, flatShading: true, transparent: true, opacity: .85 }); m.castShadow = false; m.receiveShadow = false; } });
-  const y = rr(58, 70), r0 = rr(-140, 140), z = rr(-140, -40);
+  const y = rr(80, 95), r0 = rr(-220, 220), z = rr(-230, -80);
   g.position.set(r0, y, z); scene.add(g);
-  animators.push((t, dt) => { g.position.x += dt * 1.2; if (g.position.x > 140) g.position.x = -140; });
+  animators.push((t, dt) => { g.position.x += dt * 1.2; if (g.position.x > 230) g.position.x = -230; });
 }
 // 海鳥
 for (let i = 0; i < 5; i++) {
   const g = new THREE.Group(); const w1 = box(.7, .03, .2, PAL.white, -.35, 0, 0), w2 = box(.7, .03, .2, PAL.white, .35, 0, 0); g.add(w1, w2); scene.add(g);
-  const r = rr(14, 30), h = rr(10, 16), sp = rr(.12, .22), off = rr(0, 6);
+  const r = rr(24, 54), h = rr(16, 26), sp = rr(.08, .16), off = rr(0, 6);
   animators.push(t => { const a = off + t * sp; g.position.set(Math.cos(a) * r, h + Math.sin(t + i) * .6, Math.sin(a) * r); g.rotation.y = -a; w1.rotation.z = Math.sin(t * 6 + i) * .5; w2.rotation.z = -w1.rotation.z; });
 }
 
@@ -397,7 +334,7 @@ for (const it of islands) {
 function updateLabels() {
   const w = innerWidth, h = innerHeight;
   for (const it of islands) {
-    tmp.copy(it.pos); tmp.y = it.id === 'hub' ? 5 : it.ready ? 6.6 : 5.2; tmp.project(camera);
+    tmp.copy(it.pos); tmp.y = it.id === 'hub' ? 9 : it.ready ? 8 : 9; tmp.project(camera);
     const vis = tmp.z < 1 && Math.abs(tmp.x) < 1.1 && Math.abs(tmp.y) < 1.1;
     it.label.style.display = vis ? '' : 'none';
     if (vis) it.label.style.transform = `translate(${(tmp.x * .5 + .5) * w}px,${(-tmp.y * .5 + .5) * h}px) translate(-50%,-100%)`;
@@ -418,14 +355,35 @@ const toggleList = open => $('list').classList.toggle('closed', open === undefin
 $('bList').onclick = () => toggleList(); $('listX').onclick = () => toggleList(false);
 if (innerWidth < 760) toggleList(false);
 
-// ---------- 島的資訊卡 ----------
+// ---------- 島的資訊卡、地標卡 ----------
 const info = $('info');
-const loaded = {};
-function loadNotes(id) {
-  if (loaded[id]) return loaded[id];
-  return loaded[id] = new Promise(res => { const s = document.createElement('script'); s.src = `../data/${id}.js`; s.onload = () => res((window.NOTES || {})[id]); s.onerror = () => res(null); document.head.appendChild(s); });
+const ENG = SUM.english || {};
+function lmInfo(lm) {   // 地標的標題、說明、重點、連結
+  const d = lm.def, id = lm.it.id;
+  if (id === 'english') {
+    if (d.key === 'vocab') return { k: 'VOCABULARY', t: d.title, s: `共 ${ENG.vocab || ''} 個單字片語，依主題分成 ${(ENG.topics || []).length} 組。`, h: (ENG.topics || []).slice(0, 16).map(([t, c]) => `${t} ${c}`), href: d.href };
+    if (d.key === 'poly') return { k: 'POLYSEMY', t: d.title, s: `會考常考的一字多義，共 ${ENG.polysemy || ''} 個字，附例句與中譯。`, h: [], href: d.href };
+    if (d.gram) { const g = (ENG.gram || []).find(x => x[0] === d.n); return { k: 'GRAMMAR ' + d.n, t: d.title, s: `${g ? g[1].length : ''} 則重點，含例句。`, h: g ? g[1] : [], href: d.href }; }
+    const area = d.key.split('-')[1], st = (ENG.strat || []).find(x => x[0] === area);
+    return { k: 'STRATEGY', t: d.title, s: `${st ? st[1].length : ''} 則${area}方法與解題步驟。`, h: st ? st[1] : [], href: d.href };
+  }
+  if (d.key === 'chrono') return { k: 'TIMELINE', t: d.title, s: d.desc, h: [], href: d.href };
+  const u = (SUM[id]?.list || []).find(x => x.n === d.n) || {};
+  return { k: `${lm.it.s.name} · 單元 ${d.n}`, t: `${d.n}．${u.t || d.short}`, s: u.s || '', h: u.h || [], href: `../${id}/#u${d.n}`, part: u.p };
 }
-async function showInfo(it) {
+function showLandmark(lm) {
+  const x = lmInfo(lm);
+  info.style.setProperty('--c', lm.it.theme.c); info.hidden = false;
+  info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${esc(x.k)}${x.part ? ' · ' + esc(x.part) : ''}</div><h3 class="lmt">${esc(x.t)}</h3>
+    <div class="en">島上的「${esc(lm.def.short)}」</div>
+    ${x.s ? `<p>${esc(x.s)}</p>` : ''}
+    ${x.h.length ? `<div class="chips">${x.h.map(h => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
+    <a class="go" href="${x.href}">閱讀這個${lm.it.id === 'english' ? '主題' : lm.def.key === 'chrono' ? '年表' : '單元'} →</a>
+    <button class="back" type="button">← 回到${esc(lm.it.s.name)}島</button>`;
+  info.querySelector('.x').onclick = () => { info.hidden = true; selectLm(null); };
+  info.querySelector('.back').onclick = () => focus(lm.it);
+}
+function showInfo(it) {
   const s = it.s, c = it.theme.c;
   info.style.setProperty('--c', c); info.hidden = false;
   if (it.id === 'hub') {
@@ -441,54 +399,87 @@ async function showInfo(it) {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${it.num} · ${esc(s.en.toUpperCase())}</div><h3>${esc(s.name)}島</h3>
       <p>${esc(s.desc || '')}</p>
       <div class="stats">${stats.map(([v, t]) => `<div><b>${(v || 0).toLocaleString()}</b><span>${t}</span></div>`).join('')}</div>
-      <div class="units" id="units"><span style="color:var(--muted);font-size:13px">載入單元…</span></div>
+      <div class="hint2">島上每個物件代表一個${s.id === 'english' ? '類別' : '單元'}，點物件或下面的名稱就能前往。</div>
+      <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span></button>`; }).join('')}</div>
       <a class="go" href="../${s.id}/">走進${esc(s.name)}筆記 →</a>`;
-    const d = await loadNotes(s.id);
-    const box = $('units'); if (!box || cur !== it) return;
-    if (Array.isArray(d)) box.innerHTML = d.map(u => `<a href="../${s.id}/#u${u.unit}"><i>${u.unit}</i>${esc(u.title)}</a>`).join('') + (s.id === 'history' ? `<a href="../history/#chrono"><i>年</i>大事年表（臺灣・亞洲・歐洲）</a>` : '');
-    else if (d) box.innerHTML = [['vocab', 'A', '主題單字'], ['poly', 'B', '一字多義'], ['gram', 'G', '15 大文法主題'], ['strat', '★', '學習策略']].map(([h, i, t]) => `<a href="../english/#${h}"><i>${i}</i>${t}</a>`).join('');
-    else box.innerHTML = '';
+    info.querySelectorAll('.units button').forEach(b => {
+      const lm = it.landmarks[+b.dataset.i];
+      b.onclick = () => focusLm(lm);
+      b.onmouseenter = () => { hoverLm = lm; }; b.onmouseleave = () => { if (hoverLm === lm) hoverLm = null; };
+    });
   }
   info.querySelector('.x').onclick = () => { info.hidden = true; select(null); };
 }
 
 // ---------- 鏡頭動畫 ----------
-let fly = null, cur = null, hover = null;
-const HOME = innerWidth < 760 ? { pos: new THREE.Vector3(6, 105, 112), target: new THREE.Vector3(0, 0, 8) } : { pos: new THREE.Vector3(14, 66, 80), target: new THREE.Vector3(9, 0, 3) };
-function flyTo(target, pos, dur = 1.1) { fly = { t: 0, dur, p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: target }; }
+let fly = null, cur = null, hover = null, curLm = null, hoverLm = null;
+const HOME = innerWidth < 760 ? { pos: new THREE.Vector3(10, 190, 205), target: new THREE.Vector3(0, 0, 12) } : { pos: new THREE.Vector3(24, 118, 140), target: new THREE.Vector3(16, 0, 6) };
+function flyTo(target, pos, dur = 1.2) { fly = { t: 0, dur, p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: target }; }
 const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-function select(it) { cur = it; for (const i of islands) i.label.classList.toggle('on', i === it); }
+function select(it) { cur = it; for (const i of islands) i.label.classList.toggle('on', i === it); if (!it) selectLm(null); }
+function selectLm(lm) { curLm = lm; }
+// 讓焦點落在沒有被卡片擋住的畫面中央
+function framed(target, camPos) {
+  const w = innerWidth, h = innerHeight, d = camPos.distanceTo(target), wpp = 2 * d * Math.tan(camera.fov * Math.PI / 360) / h;
+  const fwd = new THREE.Vector3().subVectors(target, camPos).setY(0).normalize(), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  let off = new THREE.Vector3();
+  if (w >= 760) {
+    const listOpen = !$('list').classList.contains('closed'), left = 400, rightEdge = listOpen ? w - 340 : w;
+    off.addScaledVector(right, -((left + rightEdge) / 2 - w / 2) * wpp);
+  } else {
+    off.addScaledVector(fwd, -(h * .23) * wpp * 1.5);
+  }
+  return [target.clone().add(off), camPos.clone().add(off)];
+}
+function viewDir() { const d = new THREE.Vector3().subVectors(camera.position, controls.target).setY(0); return d.lengthSq() < .1 ? d.set(0, 0, 1) : d.normalize(); }
 function focus(it) {
   if (!it) return;
-  select(it);
-  const dir = new THREE.Vector3().subVectors(camera.position, controls.target).setY(0).normalize();
-  if (dir.lengthSq() < .1) dir.set(0, 0, 1);
-  const t = it.pos.clone().setY(1.5);
-  const offset = innerWidth < 760 ? new THREE.Vector3(0, 0, 0) : new THREE.Vector3(0, 0, 0);
-  flyTo(t.add(offset), it.pos.clone().add(dir.multiplyScalar(innerWidth < 760 ? 40 : 33)).setY(innerWidth < 760 ? 34 : 26));
+  select(it); selectLm(null);
+  const mob = innerWidth < 760;
+  flyTo(...framed(it.pos.clone().setY(1.5), it.pos.clone().add(viewDir().multiplyScalar(mob ? 62 : 46)).setY(mob ? 58 : 40)));
   showInfo(it);
   store.set('island.last', it.id);
+}
+function focusLm(lm) {
+  select(lm.it); selectLm(lm);
+  const wp = new THREE.Vector3(); lm.group.getWorldPosition(wp);
+  const out = wp.clone().sub(lm.it.pos).setY(0); if (out.lengthSq() < .1) out.copy(viewDir()); out.normalize();
+  const mob = innerWidth < 760;
+  flyTo(...framed(wp.clone().setY(wp.y + 1.4), wp.clone().add(out.multiplyScalar(mob ? 17 : 13)).setY(wp.y + (mob ? 12 : 8.5))));
+  showLandmark(lm);
 }
 $('bHome').onclick = () => { select(null); info.hidden = true; flyTo(HOME.target.clone(), HOME.pos.clone()); };
 
 // ---------- 點擊／滑過 ----------
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const pickables = islands.map(i => i.group);
+const tip = document.createElement('div'); tip.id = 'tip'; tip.hidden = true; document.body.appendChild(tip);
 function pick(e) {
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-  const h = ray.intersectObjects(pickables, true)[0]; return h && h.object.userData.island;
+  const h = ray.intersectObjects(pickables, true)[0]; if (!h) return null;
+  return { it: h.object.userData.island, lm: h.object.userData.lm };
 }
 let down = null;
 canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
-canvas.addEventListener('pointerup', e => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const it = pick(e); if (it) focus(it); } down = null; });
-canvas.addEventListener('pointermove', e => { if (touch || e.buttons) return; const it = pick(e); if (it !== hover) { hover = it; canvas.style.cursor = it ? 'pointer' : ''; } });
+canvas.addEventListener('pointerup', e => {
+  if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const p = pick(e); if (p?.lm) focusLm(p.lm); else if (p?.it) focus(p.it); }
+  down = null;
+});
+canvas.addEventListener('pointermove', e => {
+  if (touch || e.buttons) { tip.hidden = true; return; }
+  const p = pick(e); const it = p?.it || null, lm = p?.lm || null;
+  hover = it; hoverLm = lm; canvas.style.cursor = it ? 'pointer' : '';
+  if (lm) { const x = lmInfo(lm); tip.innerHTML = `<b style="color:${lm.it.theme.c}">${esc(lm.it.s.name)}</b>　${esc(x.t)}`; tip.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; tip.hidden = false; }
+  else tip.hidden = true;
+});
+canvas.addEventListener('pointerleave', () => { tip.hidden = true; hoverLm = null; hover = null; });
 controls.addEventListener('start', () => { fly = null; });
 
 // ---------- 導覽 ----------
 const TOUR = [
-  ['每座島是一個科目', '9 座六角形的島，拼成一座學習群島。點一座島，或用右側清單，就能看到那一科的單元。'],
+  ['每座島是一個科目', '9 座六角形的島，拼成一座學習群島。點一座島，或用右側清單，鏡頭就會飛過去。'],
   ['用木橋把知識連起來', '中央是學習中心，橋把每座島連在一起。拖曳可以轉動視角，滾輪或兩指可以縮放。'],
-  ['走進筆記', '在島的卡片按「走進筆記」，或直接點單元名稱，就會打開那一科的重點筆記。灰色的島還在整理中。'],
+  ['島上的物件都有意義', '每個物件代表一個單元（英語是一個類別）：例如生物島的 DNA 是「遺傳」、歷史島的火車是「日本帝國時期」。點物件看單元重點，再按按鈕走進筆記。灰色的島還在整理中。'],
 ];
 let tk = 0;
 function tour(i) { tk = i; const [h, p] = TOUR[i]; $('tK').textContent = `HELLO, STUDENT / 0${i + 1}`; $('tH').textContent = h; $('tP').textContent = p; $('tNext').textContent = i < TOUR.length - 1 ? '下一步 →' : '開始探索'; $('tour').hidden = false; }
@@ -499,20 +490,21 @@ $('bTour').onclick = () => tour(0);
 // ---------- 主迴圈 ----------
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < 760 ? 44 : 34; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-camera.position.set(30, 130, 150); controls.target.copy(HOME.target);
+camera.position.set(50, 240, 270); controls.target.copy(HOME.target);
 flyTo(HOME.target.clone(), HOME.pos.clone(), 2.2);
 const clock = new THREE.Clock();
 function loop() {
   const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
   for (const a of animators) a(t, dt);
-  for (const it of islands) { const up = it === hover || it === cur ? .35 : 0; it.group.position.y += (up + Math.sin(t * .8 + it.bob) * .06 - it.group.position.y) * Math.min(1, dt * 6); }
+  for (const it of islands) { const up = it === cur ? .3 : it === hover ? .2 : 0; it.group.position.y += (up + Math.sin(t * .8 + it.bob) * .06 - it.group.position.y) * Math.min(1, dt * 6);
+    for (const lm of it.landmarks) { const on = lm === hoverLm || lm === curLm; const s = lm.group.scale.x + ((on ? 1.12 : 1) - lm.group.scale.x) * Math.min(1, dt * 10); lm.group.scale.setScalar(s); lm.group.position.y = (on ? .25 : 0) * (s - 1) / .12; } }
   if (fly) {
     fly.t += dt / fly.dur; const k = ease(Math.min(1, fly.t));
     camera.position.lerpVectors(fly.p0, fly.p1, k); controls.target.lerpVectors(fly.t0, fly.t1, k);
     if (fly.t >= 1) fly = null;
   }
   // 平移限制在群島附近
-  controls.target.x = Math.max(-40, Math.min(40, controls.target.x)); controls.target.z = Math.max(-40, Math.min(40, controls.target.z)); controls.target.y = Math.max(0, Math.min(4, controls.target.y));
+  controls.target.x = Math.max(-75, Math.min(75, controls.target.x)); controls.target.z = Math.max(-75, Math.min(75, controls.target.z)); controls.target.y = Math.max(0, Math.min(4, controls.target.y));
   controls.update();
   renderer.render(scene, camera);
   updateLabels();
