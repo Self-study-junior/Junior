@@ -265,7 +265,9 @@ RING2.forEach(([id, a]) => place(id, a, D * Math.sqrt(3)));
 let n = 0; for (const s of SUBJ) { const it = islands.find(i => i.id === s.id); if (it) it.num = String(++n).padStart(2, '0'); }
 
 // 橋
+const BRIDGES = [];
 function bridge(a, b) {
+  BRIDGES.push([a.clone(), b.clone()]);
   const d = new THREE.Vector3().subVectors(b, a), len = d.length() - 2 * AP + .8, mid = a.clone().add(b).multiplyScalar(.5);
   const g = new THREE.Group(); g.position.copy(mid); g.rotation.y = Math.atan2(d.x, d.z); g.scale.set(1.5, 1, 1);
   const top = .45;
@@ -476,11 +478,11 @@ function pick(e) {
 let down = null;
 canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
 canvas.addEventListener('pointerup', e => {
-  if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const p = pick(e); if (p?.lm) focusLm(p.lm); else if (p?.it) focus(p.it); }
+  if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const p = pick(e); if (walk.on) { if (p?.lm) walkTo(p.lm); } else if (p?.lm) focusLm(p.lm); else if (p?.it) focus(p.it); }
   down = null;
 });
 canvas.addEventListener('pointermove', e => {
-  if (touch || e.buttons) { tip.hidden = true; return; }
+  if (touch || e.buttons || walk.on) { tip.hidden = true; return; }
   const p = pick(e); const it = p?.it || null, lm = p?.lm || null;
   hover = it; hoverLm = lm; canvas.style.cursor = it ? 'pointer' : '';
   if (lm) { const x = lmInfo(lm); tip.innerHTML = `<b style="color:${lm.it.theme.c}">${esc(lm.it.s.name)}</b>　${esc(x.t)}`; tip.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; tip.hidden = false; }
@@ -493,6 +495,7 @@ controls.addEventListener('start', () => { fly = null; });
 const TOUR = [
   ['每座島是一個科目', '9 座六角形的島，拼成一座學習群島。點一座島，或用右側清單，鏡頭就會飛過去。'],
   ['用木橋把知識連起來', '中央是學習中心，橋把每座島連在一起。拖曳可以轉動視角，滾輪或兩指可以縮放。'],
+  ['化身島民去探險', '按上方「🧍 化身島民」建立自己的角色，用左下角的圓點搖桿在島上走路。走到物件旁邊，就能選擇進入那個單元。'],
   ['島上的物件都有意義', '每個物件代表一個單元（英語是一個類別）：例如生物島的 DNA 是「遺傳」、歷史島的火車是「日本帝國時期」。點物件看單元重點，再按按鈕走進筆記。灰色的島還在整理中。'],
 ];
 let tk = 0;
@@ -500,6 +503,266 @@ function tour(i) { tk = i; const [h, p] = TOUR[i]; $('tK').textContent = `HELLO,
 $('tNext').onclick = () => { if (tk < TOUR.length - 1) tour(tk + 1); else { $('tour').hidden = true; store.set('island.tour', 1); } };
 $('tSkip').onclick = () => { $('tour').hidden = true; store.set('island.tour', 1); };
 $('bTour').onclick = () => tour(0);
+
+
+// ================= 島民模式：化身成島民，用搖桿在島上走 =================
+const LOOKS = {
+  skin: ['#f6d2b5', '#e9b48a', '#c98d62', '#8d5a3b'],
+  hair: ['#2b1d12', '#6b4325', '#c08a3e', '#e8e0d0', '#d0533f', '#4a6fd1'],
+  shirt: ['#e2673c', '#1a8a96', '#2f8a63', '#f4c95d', '#8e6ad8', '#3d4f9a', '#fffaf2'],
+  pants: ['#3d4f9a', '#4a443e', '#8c6239', '#2f6d3a', '#c7475a'],
+  hat: ['none', '#f4c95d', '#e2673c', '#1a8a96', '#fffaf2'],
+};
+let look = store.get('islander', null);
+const walk = { on: false, pos: new THREE.Vector3(0, 0, 8), yaw: Math.PI, vy: 0, camYaw: 0, camPitch: .5, camDist: 13, target: null, stuck: 0, near: null, t: 0 };
+let villager = null;
+
+function makeVillager(L) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const S = c => M(c);
+  const leg = x => { const p = new THREE.Group(); p.position.set(x, .62, 0); p.add(box(.2, .62, .22, L.pants, 0, -.62, 0)); p.add(box(.22, .1, .3, PAL.dark, 0, -.68, .04)); return p; };
+  const legL = leg(-.13), legR = leg(.13); body.add(legL, legR);
+  body.add(cyl(.3, .34, .62, L.shirt, 0, .58, 0, 10));
+  const arm = x => { const p = new THREE.Group(); p.position.set(x, 1.12, 0); p.add(cyl(.08, .08, .5, L.shirt, 0, -.5, 0, 6)); p.add(ball(.09, L.skin, 0, -.55, 0, 0)); return p; };
+  const armL = arm(-.38), armR = arm(.38); body.add(armL, armR);
+  const head = new THREE.Group(); head.position.y = 1.5; body.add(head);
+  head.add(ball(.33, L.skin, 0, 0, 0, 1));
+  const hair = mesh(new THREE.SphereGeometry(.35, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2.1), L.hair, 0, .02, -.02); hair.rotation.x = -.25; head.add(hair);
+  for (const x of [-.11, .11]) head.add(ball(.045, PAL.dark, x, .02, .3, 0));
+  head.add(ball(.05, '#f2a7b5', -.2, -.08, .25, 0)); head.add(ball(.05, '#f2a7b5', .2, -.08, .25, 0));
+  if (L.hat !== 'none') { head.add(cyl(.5, .5, .05, L.hat, 0, .2, 0, 14)); head.add(cyl(.28, .32, .26, L.hat, 0, .22, 0, 12)); }
+  shadow(g);
+  g.userData = { body, legL, legR, armL, armR, head };
+  if (L.name) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 72; const x = c.getContext('2d');
+    x.font = '900 36px "Noto Sans TC",sans-serif'; const w = Math.min(250, x.measureText(L.name).width + 30);
+    x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.roundRect((256 - w) / 2, 10, w, 52, 26); x.fill();
+    x.fillStyle = PAL.dark; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(L.name, 128, 37);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false })); sp.scale.set(2.2, .62, 1); sp.position.y = 2.45; sp.renderOrder = 5; g.add(sp);
+  }
+  // 腳下的光圈
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.45, .6, 24), new THREE.MeshBasicMaterial({ color: '#fff', transparent: true, opacity: .7 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; g.add(ring);
+  return g;
+}
+
+// ---------- 地形：哪裡能走、地面多高 ----------
+const HEXN = [0, 1, 2].map(k => { const a = k * Math.PI / 3; return [Math.sin(a), -Math.cos(a)]; });
+const inHex = (x, z, c, m) => HEXN.every(([nx, nz]) => Math.abs((x - c.x) * nx + (z - c.z) * nz) <= AP - m);
+const obstacles = [];  // { x, z, r } 或 { box:[x0,z0,x1,z1] }
+for (const it of islands) {
+  for (const lm of it.landmarks) { const p = new THREE.Vector3(); lm.group.getWorldPosition(p); obstacles.push({ x: p.x, z: p.z, r: lm.pr * .92, lm }); lm.wp = p; }
+  if (it.landmarks.length) obstacles.push({ x: it.pos.x, z: it.pos.z, r: .85 });
+}
+const HUB = islands.find(i => i.id === 'hub');
+if (HUB) { obstacles.push({ x: 0, z: 0, r: 2.45 }); obstacles.push({ box: [-3.9, -8.75, 3.9, -4.6] }); }
+function groundAt(x, z) {   // 回傳地面高度；不能走回傳 null
+  for (const it of islands) if (inHex(x, z, it.pos, .7)) return it.group.position.y + it.group.userData.top;
+  for (const [a, b] of BRIDGES) {
+    const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz), t = ((x - a.x) * dx + (z - a.z) * dz) / L;
+    if (t < 0 || t > L) continue;
+    if (Math.abs((x - a.x) * dz - (z - a.z) * dx) / L <= .95) return .66;
+  }
+  return null;
+}
+function blocked(x, z) {
+  for (const o of obstacles) {
+    if (o.box) { if (x > o.box[0] && x < o.box[2] && z > o.box[1] && z < o.box[3]) return true; }
+    else if ((x - o.x) ** 2 + (z - o.z) ** 2 < (o.r + .35) ** 2) return true;
+  }
+  return groundAt(x, z) === null;
+}
+const islandAt = (x, z) => islands.find(it => inHex(x, z, it.pos, 0));
+
+// ---------- 介面 ----------
+const joy = $('joy'), knob = joy.querySelector('i'), nearEl = $('near');
+const stick = { x: 0, y: 0, id: null };
+function moveStick(e) {
+  const r = joy.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2); const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
+  stick.x = dx; stick.y = dy; knob.style.transform = `translate(${dx * 40}px,${dy * 40}px)`;
+}
+joy.addEventListener('pointerdown', e => { stick.id = e.pointerId; joy.setPointerCapture(e.pointerId); joy.classList.add('on'); walk.target = null; moveStick(e); e.preventDefault(); });
+joy.addEventListener('pointermove', e => { if (stick.id === e.pointerId) moveStick(e); });
+const stickEnd = () => { stick.id = null; stick.x = stick.y = 0; knob.style.transform = ''; joy.classList.remove('on'); };
+joy.addEventListener('pointerup', stickEnd); joy.addEventListener('pointercancel', stickEnd);
+const keys = new Set();
+addEventListener('keydown', e => {
+  if (!walk.on || e.target.tagName === 'INPUT') return;
+  keys.add(e.code);
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  if (e.code === 'Enter' && walk.near?.href) location.href = walk.near.href;
+  if (e.code === 'Space' && walk.vy === 0 && villager && villager.position.y - walk.ground < .01) walk.vy = 6;
+});
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('blur', () => keys.clear());
+
+// 拖曳畫面轉視角
+let camDrag = null;
+canvas.addEventListener('pointerdown', e => { if (walk.on) camDrag = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+addEventListener('pointermove', e => {
+  if (!walk.on || !camDrag || camDrag.id !== e.pointerId) return;
+  walk.camYaw -= (e.clientX - camDrag.x) * .006; walk.camPitch = Math.max(.18, Math.min(1.15, walk.camPitch + (e.clientY - camDrag.y) * .004));
+  camDrag.x = e.clientX; camDrag.y = e.clientY;
+});
+addEventListener('pointerup', e => { if (camDrag && camDrag.id === e.pointerId) camDrag = null; });
+canvas.addEventListener('wheel', e => { if (walk.on) { walk.camDist = Math.max(6, Math.min(26, walk.camDist + e.deltaY * .012)); e.preventDefault(); } }, { passive: false });
+
+// 靠近時的提示卡
+function nearInfo() {
+  const p = walk.pos; let best = null, bd = 1e9;
+  for (const o of obstacles) if (o.lm) { const d = Math.hypot(p.x - o.x, p.z - o.z) - o.r; if (d < 1.9 && d < bd) { bd = d; best = { lm: o.lm }; } }
+  if (best) return best;
+  const it = islandAt(p.x, p.z);
+  if (!it) return null;
+  if (it.id === 'hub') return Math.hypot(p.x, p.z + 6.7) < 7 ? { hub: true } : null;
+  if (!it.ready) return Math.hypot(p.x - it.pos.x, p.z - it.pos.z) < 8 ? { soon: it } : null;
+  if (Math.hypot(p.x - it.pos.x, p.z - it.pos.z) < 3.2) return { it };
+  return null;
+}
+function renderNear(n) {
+  const key = n ? (n.lm ? 'l' + n.lm.it.id + n.lm.key : n.it ? 'i' + n.it.id : n.soon ? 's' + n.soon.id : 'h') : '';
+  if (key === renderNear.k) return; renderNear.k = key;
+  walk.near = null;
+  if (!n) { nearEl.hidden = true; return; }
+  let c, html;
+  if (n.lm) {
+    const x = lmInfo(n.lm); c = n.lm.it.theme.c; walk.near = { href: x.href };
+    html = `<div class="k">${esc(n.lm.it.s.name)}島 · 島上的「${esc(n.lm.def.short)}」</div><b>${esc(x.t)}</b>
+      <small>${seen(n.lm) ? '<span class="done">✓ 已讀過</span>' : '還沒讀過，進去看看吧！'}</small>
+      <div class="acts"><a href="${x.href}">進入${n.lm.it.id === 'english' ? '主題' : n.lm.def.key === 'chrono' ? '年表' : '單元'} →</a><button type="button" data-a="peek">看重點</button></div>`;
+  } else if (n.it) {
+    const s = n.it.s, v = n.it.landmarks.filter(seen).length; c = n.it.theme.c; walk.near = { href: `../${s.id}/` };
+    html = `<div class="k">${esc(s.en.toUpperCase())}</div><b>${esc(s.name)}島的科目碑</b><small>已探索 ${v} / ${n.it.landmarks.length} 個${s.id === 'english' ? '類別' : '單元'}</small>
+      <div class="acts"><a href="../${s.id}/">走進${esc(s.name)}筆記 →</a><button type="button" data-a="list">單元列表</button></div>`;
+  } else if (n.soon) {
+    c = n.soon.theme.c; html = `<div class="k">UNDER CONSTRUCTION</div><b>${esc(n.soon.s.name)}島施工中</b><small>筆記整理好之後就會開放，先去其他島逛逛吧！</small>`;
+  } else {
+    c = PAL.roof; walk.near = { href: '../' };
+    html = `<div class="k">STUDY CENTER</div><b>學習中心圖書館</b><small>這裡可以打開一般版首頁，搜尋全部筆記。</small><div class="acts"><a href="../">打開一般版首頁 →</a></div>`;
+  }
+  nearEl.style.setProperty('--c', c); nearEl.innerHTML = html; nearEl.hidden = false;
+  const peek = nearEl.querySelector('[data-a="peek"]'); if (peek) peek.onclick = () => { showLandmark(n.lm); info.querySelector('.back').onclick = () => { info.hidden = true; }; };
+  const lst = nearEl.querySelector('[data-a="list"]'); if (lst) lst.onclick = () => { showInfo(n.it); info.querySelectorAll('.units button').forEach(b => { const lm = n.it.landmarks[+b.dataset.i]; b.onclick = () => walkTo(lm); }); };
+}
+function walkTo(lm) { walk.target = lm; walk.stuck = 0; info.hidden = true; }
+
+// ---------- 進入、離開 ----------
+function spawnAt(lm) {
+  if (lm) {   // 找物件旁邊一個能站、而且最靠近這個物件的位置，面向物件
+    const base = Math.atan2(lm.it.pos.x - lm.wp.x, lm.it.pos.z - lm.wp.z); let pick = null;
+    for (let i = 0; i < 16 && !pick; i++) {
+      const a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * Math.PI / 8, r = lm.pr + 1.3;
+      const x = lm.wp.x + Math.sin(a) * r, z = lm.wp.z + Math.cos(a) * r;
+      if (blocked(x, z)) continue;
+      const nearest = obstacles.filter(o => o.lm).reduce((m, o) => { const d = Math.hypot(x - o.x, z - o.z) - o.r; return d < m.d ? { d, o } : m; }, { d: 1e9 });
+      if (nearest.o?.lm === lm) pick = [x, z, a];
+    }
+    if (!pick) { const a = base; pick = [lm.wp.x + Math.sin(a) * (lm.pr + 1.3), lm.wp.z + Math.cos(a) * (lm.pr + 1.3), a]; }
+    walk.pos.set(pick[0], 0, pick[1]); walk.yaw = pick[2] + Math.PI;
+  }
+  else { walk.pos.set(0, 0, 9); walk.yaw = Math.PI; }
+  walk.pos.y = groundAt(walk.pos.x, walk.pos.z) ?? 1; walk.camYaw = walk.yaw + Math.PI;
+}
+function startWalk(lm) {
+  if (!look) { openMaker(() => startWalk(lm)); return; }
+  if (villager) scene.remove(villager);
+  villager = makeVillager(look); scene.add(villager);
+  if (!walk.on || lm) spawnAt(lm);
+  walk.on = true; store.set('island.mode', 'walk');
+  document.body.classList.add('walking'); controls.enabled = false; fly = null;
+  select(null); info.hidden = true; tip.hidden = true;
+  $('walkHud').hidden = false; joy.hidden = false; $('wHelp').hidden = touch; renderNear.k = null;
+}
+function stopWalk() {
+  walk.on = false; store.set('island.mode', 'view');
+  if (villager) { scene.remove(villager); villager = null; }
+  document.body.classList.remove('walking'); controls.enabled = true;
+  $('walkHud').hidden = true; joy.hidden = true; $('wHelp').hidden = true; nearEl.hidden = true; info.hidden = true;
+  const p = walk.pos.clone(); flyTo(p.clone().setY(1), p.clone().add(new THREE.Vector3(0, 60, 60)));
+}
+$('bWalk').onclick = () => startWalk(null);
+$('wExit').onclick = stopWalk;
+$('wSkin').onclick = () => openMaker(() => startWalk());
+
+// ---------- 建立角色 ----------
+const draft = {};
+function avatarSVG(L) {
+  return `<ellipse cx="60" cy="150" rx="26" ry="5" fill="#00000022"/>
+    <rect x="46" y="112" width="11" height="34" rx="4" fill="${L.pants}"/><rect x="63" y="112" width="11" height="34" rx="4" fill="${L.pants}"/>
+    <path d="M40 116 L44 78 Q60 70 76 78 L80 116 Z" fill="${L.shirt}"/>
+    <rect x="31" y="80" width="9" height="30" rx="4.5" fill="${L.shirt}" transform="rotate(10 35 80)"/><rect x="80" y="80" width="9" height="30" rx="4.5" fill="${L.shirt}" transform="rotate(-10 85 80)"/>
+    <circle cx="60" cy="52" r="22" fill="${L.skin}"/>
+    <path d="M37 52 Q36 26 60 27 Q84 26 83 52 Q78 38 60 38 Q42 38 37 52Z" fill="${L.hair}"/>
+    <circle cx="52" cy="54" r="2.6" fill="#4a443e"/><circle cx="68" cy="54" r="2.6" fill="#4a443e"/>
+    <circle cx="46" cy="61" r="3" fill="#f2a7b5"/><circle cx="74" cy="61" r="3" fill="#f2a7b5"/>
+    ${L.hat !== 'none' ? `<ellipse cx="60" cy="33" rx="31" ry="5" fill="${L.hat}"/><path d="M45 33 Q46 16 60 16 Q74 16 75 33Z" fill="${L.hat}"/>` : ''}`;
+}
+function paintMaker() {
+  $('mkPrev').innerHTML = avatarSVG(draft);
+  document.querySelectorAll('#maker .row').forEach(r => r.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === draft[r.dataset.k])));
+}
+let makerDone = null;
+function openMaker(done) {
+  makerDone = done;
+  Object.assign(draft, look || { name: '', skin: LOOKS.skin[0], hair: LOOKS.hair[0], shirt: LOOKS.shirt[0], pants: LOOKS.pants[0], hat: 'none' });
+  document.querySelectorAll('#maker .row').forEach(r => {
+    const k = r.dataset.k; r.querySelectorAll('button').forEach(b => b.remove());
+    for (const v of LOOKS[k]) { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; b.title = v === 'none' ? '不戴帽子' : v; b.style.background = v === 'none' ? '#fff' : v; if (v === 'none') b.textContent = '✕'; b.onclick = () => { draft[k] = v; paintMaker(); }; r.appendChild(b); }
+  });
+  $('mkName').value = draft.name || ''; paintMaker(); $('maker').hidden = false; setTimeout(() => $('mkName').focus(), 50);
+}
+$('mkRand').onclick = () => { for (const k of Object.keys(LOOKS)) draft[k] = LOOKS[k][rnd() * LOOKS[k].length | 0]; paintMaker(); };
+$('mkGo').onclick = () => { draft.name = $('mkName').value.trim().slice(0, 8) || '島民'; look = { ...draft }; store.set('islander', look); $('maker').hidden = true; makerDone && makerDone(); };
+
+// ---------- 每幀：移動、動畫、鏡頭 ----------
+const camGoal = new THREE.Vector3(), lookGoal = new THREE.Vector3();
+function walkUpdate(dt, t) {
+  if (!walk.on || !villager) return false;
+  let fx = stick.x, fz = -stick.y;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) fz += 1;
+  if (keys.has('KeyS') || keys.has('ArrowDown')) fz -= 1;
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) fx -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) fx += 1;
+  let mx = 0, mz = 0, amt = Math.min(1, Math.hypot(fx, fz));
+  if (amt > .08) {
+    walk.target = null;
+    const a = walk.camYaw + Math.PI + Math.atan2(-fx, fz);   // 前方＝背對鏡頭
+    mx = Math.sin(a); mz = Math.cos(a);
+  } else if (walk.target) {
+    const lm = walk.target, d = Math.hypot(lm.wp.x - walk.pos.x, lm.wp.z - walk.pos.z) - lm.pr;
+    if (d < 1.4) walk.target = null; else { mx = (lm.wp.x - walk.pos.x); mz = (lm.wp.z - walk.pos.z); const l = Math.hypot(mx, mz); mx /= l; mz /= l; amt = 1; }
+  }
+  const speed = (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 8 : 5) * amt * dt;
+  const moving = speed > 0;
+  if (moving) {
+    const nx = walk.pos.x + mx * speed, nz = walk.pos.z + mz * speed;
+    let moved = false;
+    if (!blocked(nx, nz)) { walk.pos.x = nx; walk.pos.z = nz; moved = true; }
+    else if (!blocked(nx, walk.pos.z)) { walk.pos.x = nx; moved = true; }
+    else if (!blocked(walk.pos.x, nz)) { walk.pos.z = nz; moved = true; }
+    if (!moved && walk.target && (walk.stuck += dt) > .8) walk.target = null;
+    let dy = Math.atan2(mx, mz) - walk.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); walk.yaw += dy * Math.min(1, dt * 12);
+    walk.t += speed * 2.2;
+  } else walk.t *= .85;
+  walk.ground = groundAt(walk.pos.x, walk.pos.z) ?? walk.ground ?? .7;
+  walk.vy -= 20 * dt; villager.position.y = Math.max(walk.ground, villager.position.y + walk.vy * dt);
+  if (villager.position.y <= walk.ground) walk.vy = 0;
+  villager.position.x = walk.pos.x; villager.position.z = walk.pos.z; villager.rotation.y = walk.yaw;
+  const u = villager.userData, sw = Math.sin(walk.t) * (moving ? .75 : 0);
+  u.legL.rotation.x = sw; u.legR.rotation.x = -sw; u.armL.rotation.x = -sw * .9; u.armR.rotation.x = sw * .9;
+  u.body.position.y = moving ? Math.abs(Math.sin(walk.t)) * .06 : Math.sin(t * 2) * .015;
+  // 鏡頭跟在後方
+  const p = villager.position;
+  lookGoal.set(p.x, p.y + 1.4, p.z);
+  camGoal.set(p.x + Math.sin(walk.camYaw) * Math.cos(walk.camPitch) * walk.camDist, p.y + 1.4 + Math.sin(walk.camPitch) * walk.camDist, p.z + Math.cos(walk.camYaw) * Math.cos(walk.camPitch) * walk.camDist);
+  camera.position.lerp(camGoal, Math.min(1, dt * 6)); controls.target.lerp(lookGoal, Math.min(1, dt * 8)); camera.lookAt(controls.target);
+  // 自動走路時鏡頭慢慢轉到角色背後
+  if (walk.target) { let d = (walk.yaw + Math.PI) - walk.camYaw; d = Math.atan2(Math.sin(d), Math.cos(d)); walk.camYaw += d * Math.min(1, dt * 1.5); }
+  // 靠近的物件
+  const n = nearInfo(); renderNear(n); hoverLm = n?.lm || null;
+  return true;
+}
 
 // ---------- 主迴圈 ----------
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < 760 ? 44 : 34; camera.updateProjectionMatrix(); }
@@ -517,9 +780,11 @@ function loop() {
     camera.position.lerpVectors(fly.p0, fly.p1, k); controls.target.lerpVectors(fly.t0, fly.t1, k);
     if (fly.t >= 1) fly = null;
   }
-  // 平移限制在群島附近
-  controls.target.x = Math.max(-75, Math.min(75, controls.target.x)); controls.target.z = Math.max(-75, Math.min(75, controls.target.z)); controls.target.y = Math.max(0, Math.min(4, controls.target.y));
-  controls.update();
+  if (!walkUpdate(dt, t)) {
+    // 平移限制在群島附近
+    controls.target.x = Math.max(-75, Math.min(75, controls.target.x)); controls.target.z = Math.max(-75, Math.min(75, controls.target.z)); controls.target.y = Math.max(0, Math.min(4, controls.target.y));
+    controls.update();
+  }
   renderer.render(scene, camera);
   updateLabels();
   requestAnimationFrame(loop);
@@ -531,11 +796,13 @@ function fromHash() {
   const it = islands.find(i => i.id === id); if (!it) return false;
   const lm = key && it.landmarks.find(l => l.key === key);
   if (innerWidth < 760) toggleList(false);
+  if (store.get('island.mode', 'view') === 'walk' && look) { startWalk(lm || it.landmarks[0] || null); if (!lm && !it.landmarks.length) { walk.pos.set(it.pos.x, 0, it.pos.z + 5); } return true; }
   lm ? focusLm(lm) : focus(it); return true;
 }
 addEventListener('hashchange', fromHash);
 setTimeout(() => {
   $('loading').classList.add('done');
   if (location.hash.length > 1) { fly = null; setTimeout(fromHash, 200); return; }
+  if (store.get('island.mode', 'view') === 'walk' && look) { setTimeout(() => startWalk(null), 200); return; }
   if (!store.get('island.tour', 0)) setTimeout(() => tour(0), 900);
 }, 300);
