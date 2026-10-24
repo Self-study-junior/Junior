@@ -115,6 +115,7 @@
     }
     store.set('unit.' + ID, u.unit);
     store.set('last', { id: ID, hash: '#u' + u.unit, title: `單元 ${u.unit}　${u.title}` });
+    J.visit(ID, 'u' + u.unit);
     if (m && m[2]) {
       const el = document.getElementById(m[2]);
       if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }));
@@ -134,6 +135,7 @@
     }
     store.set('unit.' + ID, 'chrono');
     store.set('last', { id: ID, hash: '#chrono', title: '大事年表' });
+    J.visit(ID, 'chrono');
     if (anchor) { const el = document.getElementById(anchor); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })); }
   }
   function bind() {
@@ -148,4 +150,5 @@
   }
   addEventListener('hashchange', route);
   route();
+  J.islandFab(() => shown === 'chrono' ? 'chrono' : shown && shown.unit ? 'u' + shown.unit : '');
 })();

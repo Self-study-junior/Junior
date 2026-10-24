@@ -125,10 +125,14 @@
     if (cur) { cur.setAttribute('aria-current', 'page'); cur.scrollIntoView({ block: 'nearest' }); }
     const sel = pick.querySelector('select'); if ([...sel.options].some(o => o.value === (a ? k + '/' + a : k))) sel.value = a ? k + '/' + a : k;
     store.set('unit.english', key);
+    curKey = k === 'gram' && GT[+a] ? 'gram-' + (+a) : k === 'strat' && AREAS.includes(a) ? 'strat-' + a : k === 'vocab' || k === 'poly' ? k : '';
+    if (curKey) J.visit('english', curKey);
     store.set('last', { id: 'english', hash: '#' + key.split('/').map(encodeURIComponent).join('/'), title: page.title });
     if (anchor) { const el = document.getElementById(anchor); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })); }
     else window.scrollTo(0, 0);
   }
+  let curKey = '';
   addEventListener('hashchange', route);
   route();
+  J.islandFab(() => curKey);
 })();

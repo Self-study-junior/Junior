@@ -190,6 +190,16 @@ function slotsFor(defs) {
   else { ring(defs.slice(0, 5), 4.5, 0); ring(defs.slice(5), 8.5, Math.PI / (n - 5)); }
   return out;
 }
+// 讀過的單元會在物件旁插一面小旗子
+const VISITED = new Set(Object.entries(store.get('visited', {})).flatMap(([id, l]) => l.map(k => id + '|' + k)));
+const seen = lm => VISITED.has(lm.it.id + '|' + lm.key);
+function addStamp(lm) {
+  const pr = lm.pr;
+  const f = new THREE.Group(); f.position.set(-pr * .75, .3, pr * .55); lm.group.add(f);
+  f.add(cyl(.03, .03, 1.3, PAL.dark, 0, 0, 0, 5));
+  const flag = box(.55, .34, .03, PAL.yellow, .28, 1.0, 0); f.add(flag); f.add(ball(.06, PAL.yellow, 0, 1.33, 0, 0));
+  animators.push(t => { flag.rotation.y = Math.sin(t * 3 + lm.group.position.x) * .25; });
+}
 const kit = { THREE, PAL, M, mesh, box, cyl, cone, ball, prism, house, person, textTex, A: f => animators.push(f) };
 function buildSubject(g, id, theme, it) {
   const L = lay(g, 1);
@@ -213,7 +223,9 @@ function buildSubject(g, id, theme, it) {
     const inner = new THREE.Group(); inner.position.y = .3; if (few) inner.scale.setScalar(1.4); w.add(inner);
     d.build({ ...kit, g: inner });
     const sp = numSprite(d.n ? String(d.n) : d.key === 'chrono' ? '年' : '★', theme.c); sp.position.set(0, .55, pr + .15); w.add(sp);
-    const lm = { def: d, it, group: w, plinth, sprite: sp };
+    const key = d.key || 'u' + d.n;
+    const lm = { def: d, it, group: w, plinth, sprite: sp, key, pr };
+    if (VISITED.has(id + '|' + key)) addStamp(lm);
     w.traverse(m => { m.userData.lm = lm; });
     it.landmarks.push(lm);
   }
@@ -375,7 +387,7 @@ function showLandmark(lm) {
   const x = lmInfo(lm);
   info.style.setProperty('--c', lm.it.theme.c); info.hidden = false;
   info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${esc(x.k)}${x.part ? ' · ' + esc(x.part) : ''}</div><h3 class="lmt">${esc(x.t)}</h3>
-    <div class="en">島上的「${esc(lm.def.short)}」</div>
+    <div class="en">島上的「${esc(lm.def.short)}」${seen(lm) ? '　<span class="done">✓ 已讀過</span>' : '　<span class="new">還沒讀過，去看看！</span>'}</div>
     ${x.s ? `<p>${esc(x.s)}</p>` : ''}
     ${x.h.length ? `<div class="chips">${x.h.map(h => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
     <a class="go" href="${x.href}">閱讀這個${lm.it.id === 'english' ? '主題' : lm.def.key === 'chrono' ? '年表' : '單元'} →</a>
@@ -389,6 +401,7 @@ function showInfo(it) {
   if (it.id === 'hub') {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">STUDY CENTER</div><h3>學習中心</h3><div class="en">國中自學筆記</div>
       <p>這裡是群島的中心。從廣場走過木橋，就能到每一科的島。已開放 ${ready.length} 座島，國文、數學、理化、地理還在整理中。</p>
+      ${(() => { const all = islands.flatMap(i => i.landmarks), v = all.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${all.length ? v / all.length * 100 : 0}%"></i></div><span>整座群島已探索 <b>${v}</b> / ${all.length}</span></div>`; })()}
       <a class="go" href="../">打開一般版首頁（含全站搜尋） →</a>`;
   } else if (!s.ready) {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${it.num} · UNDER CONSTRUCTION</div><h3>${esc(s.name)}島</h3><div class="en">${esc(s.en)}</div>
@@ -399,8 +412,9 @@ function showInfo(it) {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${it.num} · ${esc(s.en.toUpperCase())}</div><h3>${esc(s.name)}島</h3>
       <p>${esc(s.desc || '')}</p>
       <div class="stats">${stats.map(([v, t]) => `<div><b>${(v || 0).toLocaleString()}</b><span>${t}</span></div>`).join('')}</div>
-      <div class="hint2">島上每個物件代表一個${s.id === 'english' ? '類別' : '單元'}，點物件或下面的名稱就能前往。</div>
-      <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span></button>`; }).join('')}</div>
+      ${(() => { const n = it.landmarks.length, v = it.landmarks.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${n ? v / n * 100 : 0}%"></i></div><span>已探索 <b>${v}</b> / ${n}${v === n && n ? '　🏆 全部探索完成！' : ''}</span></div>`; })()}
+      <div class="hint2">島上每個物件代表一個${s.id === 'english' ? '類別' : '單元'}，讀過的會插上 🚩 黃色小旗。點物件或下面的名稱就能前往。</div>
+      <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span>${seen(lm) ? '<em>✓</em>' : ''}</button>`; }).join('')}</div>
       <a class="go" href="../${s.id}/">走進${esc(s.name)}筆記 →</a>`;
     info.querySelectorAll('.units button').forEach(b => {
       const lm = it.landmarks[+b.dataset.i];
@@ -511,4 +525,17 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
-setTimeout(() => { $('loading').classList.add('done'); if (!store.get('island.tour', 0)) setTimeout(() => tour(0), 900); }, 300);
+// 從筆記頁回來：#history 飛到歷史島、#history/u4 飛到第 4 單元的物件
+function fromHash() {
+  const [id, key] = decodeURIComponent(location.hash.slice(1)).split('/');
+  const it = islands.find(i => i.id === id); if (!it) return false;
+  const lm = key && it.landmarks.find(l => l.key === key);
+  if (innerWidth < 760) toggleList(false);
+  lm ? focusLm(lm) : focus(it); return true;
+}
+addEventListener('hashchange', fromHash);
+setTimeout(() => {
+  $('loading').classList.add('done');
+  if (location.hash.length > 1) { fly = null; setTimeout(fromHash, 200); return; }
+  if (!store.get('island.tour', 0)) setTimeout(() => tour(0), 900);
+}, 300);
