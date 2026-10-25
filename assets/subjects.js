@@ -2,7 +2,8 @@
 window.SUBJECTS = [
   { id: 'english', name: '英語', en: 'English', group: '語文', ready: true, mark: 'A',
     desc: '主題單字、一字多義、15 大文法主題與閱讀聽力策略，三版講義整併。' },
-  { id: 'chinese', name: '國文', en: 'Chinese', group: '語文', ready: false, mark: '文' },
+  { id: 'chinese', name: '國文', en: 'Chinese', group: '語文', ready: true, mark: '文',
+    desc: '字音字形、字詞成語、修辭語法、應用文與國學常識，白話文言閱讀與寫作攻略。' },
   { id: 'math', name: '數學', en: 'Math', group: '數學', ready: false, mark: '∑' },
   { id: 'biology', name: '生物', en: 'Biology', group: '自然', ready: true, mark: '生',
     desc: '從細胞到生態系：構造與功能、恆定、遺傳演化，附重要實驗整理。' },
