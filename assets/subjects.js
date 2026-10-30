@@ -12,7 +12,8 @@ window.SUBJECTS = [
     desc: '岩石與地貌、板塊運動、天文、大氣天氣與全球變遷。' },
   { id: 'history', name: '歷史', en: 'History', group: '社會', ready: true, mark: '史',
     desc: '臺灣史、中國與東亞史、世界史，附年代軸、史料判讀線索，以及臺灣・亞洲・歐洲對照的大事年表。' },
-  { id: 'geography', name: '地理', en: 'Geography', group: '社會', ready: false, mark: '理' },
+  { id: 'geography', name: '地理', en: 'Geography', group: '社會', ready: true, mark: '洲',
+    desc: '臺灣的地形氣候、人口產業與區域，中國與世界各區，以及地名文化與食品安全。' },
   { id: 'civics', name: '公民', en: 'Civics', group: '社會', ready: true, mark: '公',
     desc: '個人與社群、政治、法律、經濟四大篇，易混淆觀念一次釐清。' },
 ];

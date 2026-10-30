@@ -14,6 +14,7 @@
 [data-subject="earth"]{--accent:#8a5a2b;--accent-soft:#f3e8dc}
 [data-subject="english"]{--accent:#127a86;--accent-soft:#dcf0f2}
 [data-subject="chinese"]{--accent:#a8453a;--accent-soft:#f6e1dc}
+[data-subject="geography"]{--accent:#b8701f;--accent-soft:#f7e8d2}
 [data-subject="soon"]{--accent:#8b8f94;--accent-soft:#ecebe6}
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -26,6 +27,7 @@
   :root:not([data-theme="light"]) [data-subject="earth"]{--accent:#e0aa6e;--accent-soft:#33271c}
   :root:not([data-theme="light"]) [data-subject="english"]{--accent:#5cc6d2;--accent-soft:#173236}
   :root:not([data-theme="light"]) [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
+  :root:not([data-theme="light"]) [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
   :root:not([data-theme="light"]) [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 }
 :root[data-theme="dark"]{
@@ -38,6 +40,7 @@
 :root[data-theme="dark"] [data-subject="earth"]{--accent:#e0aa6e;--accent-soft:#33271c}
 :root[data-theme="dark"] [data-subject="english"]{--accent:#5cc6d2;--accent-soft:#173236}
 :root[data-theme="dark"] [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
+:root[data-theme="dark"] [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
 :root[data-theme="dark"] [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 
 *{box-sizing:border-box}
