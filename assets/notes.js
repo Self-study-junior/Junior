@@ -28,6 +28,7 @@
   // ---------- 單元內容 ----------
   function unitHTML(u) {
     const blocks = [['secs', '重點整理']];
+    if (u.formulas) blocks.push(['fml', '重要公式']);
     if (u.experiments) blocks.push(['exp', '重要實驗']);
     if (u.timeline) blocks.push(['tl', '年代軸']);
     if (u.sources) blocks.push(['srcs', '史料判讀']);
@@ -44,6 +45,9 @@
         ${s.fig ? `<figure class="fig"><img src="${esc(s.fig.src)}" alt="${esc(s.fig.cap)}" loading="lazy"><figcaption>${esc(s.fig.cap)}</figcaption></figure>` : ''}
         ${s.img ? `<figure class="fig"><img src="${esc(s.img)}" alt="${esc(s.heading)}附圖" loading="lazy"></figure>` : ''}
         ${s.example ? `<div class="eg"><b>例</b>${esc(s.example)}</div>` : ''}</section>`).join('')}</div>
+
+      ${u.formulas ? `<h2 class="blk-h" id="fml">重要公式 <small>${u.formulas.length} 條</small></h2>
+      <div class="fmls">${u.formulas.map(f => `<article class="fml"><div class="fh">${esc(f.heading)}</div><b>${esc(f.name)}</b><div class="eq">${esc(f.formula)}</div>${f.vars ? `<div class="vars">${esc(f.vars)}</div>` : ''}${f.note ? `<div class="fn">💡 ${esc(f.note)}</div>` : ''}</article>`).join('')}</div>` : ''}
 
       ${u.experiments ? `<h2 class="blk-h" id="exp">重要實驗 <small>${u.experiments.length} 個</small></h2>
       <div class="exps">${u.experiments.map(x => `<article class="exp"><h3>${esc(x.name)}</h3><dl>
@@ -76,6 +80,7 @@
     u.sections.forEach((s, k) => rows.push({ u, where: s.heading, text: [s.heading, ...s.points, s.example || ''].join('　'), to: `s${k + 1}` }));
     u.terms.forEach(t => rows.push({ u, where: '關鍵名詞', text: t.term + '：' + t.def, to: 'terms' }));
     u.confusions.forEach(c => rows.push({ u, where: '易混淆觀念', text: `${c.a} vs. ${c.b}：${c.diff}；${c.tip}`, to: 'conf' }));
+    (u.formulas || []).forEach(f => rows.push({ u, where: '重要公式', text: [f.name, f.formula, f.vars, f.note].join('　'), to: 'fml' }));
     (u.experiments || []).forEach(x => rows.push({ u, where: '重要實驗', text: [x.name, x.purpose, x.steps, x.result, x.pitfall].join('　'), to: 'exp' }));
     (u.timeline || []).forEach(t => rows.push({ u, where: '年代軸', text: t.time + '　' + t.event, to: 'tl' }));
     (u.sources || []).forEach(s => rows.push({ u, where: '史料判讀', text: [s.name, s.gist, s.clue].join('　'), to: 'srcs' }));

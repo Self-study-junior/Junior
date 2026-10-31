@@ -15,6 +15,7 @@
 [data-subject="english"]{--accent:#127a86;--accent-soft:#dcf0f2}
 [data-subject="chinese"]{--accent:#a8453a;--accent-soft:#f6e1dc}
 [data-subject="geography"]{--accent:#b8701f;--accent-soft:#f7e8d2}
+[data-subject="physchem"]{--accent:#6a4fb0;--accent-soft:#ebe4f7}
 [data-subject="soon"]{--accent:#8b8f94;--accent-soft:#ecebe6}
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -28,6 +29,7 @@
   :root:not([data-theme="light"]) [data-subject="english"]{--accent:#5cc6d2;--accent-soft:#173236}
   :root:not([data-theme="light"]) [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
   :root:not([data-theme="light"]) [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
+  :root:not([data-theme="light"]) [data-subject="physchem"]{--accent:#b29cf0;--accent-soft:#2b2440}
   :root:not([data-theme="light"]) [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 }
 :root[data-theme="dark"]{
@@ -41,6 +43,7 @@
 :root[data-theme="dark"] [data-subject="english"]{--accent:#5cc6d2;--accent-soft:#173236}
 :root[data-theme="dark"] [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
 :root[data-theme="dark"] [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
+:root[data-theme="dark"] [data-subject="physchem"]{--accent:#b29cf0;--accent-soft:#2b2440}
 :root[data-theme="dark"] [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 
 *{box-sizing:border-box}
@@ -329,3 +332,12 @@ table.vt td.z.show>*{color:inherit;background:none}
 @media (max-width:560px){.fab{right:12px;bottom:12px}.fab-btn span{display:none}.fab-btn{padding:8px}}
 @media (prefers-reduced-motion:reduce){.fab-btn,.fab-menu a{animation:none}}
 @media print{.fab{display:none}}
+
+/* 理化：公式卡 */
+.fmls{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.fml{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.fml .fh{font-size:12px;color:var(--muted)}
+.fml b{display:block;font-size:16px;margin:2px 0 8px}
+.fml .eq{font-family:var(--en),var(--serif);font-size:17px;padding:8px 12px;border-radius:8px;background:var(--accent-soft);line-height:1.5}
+.fml .vars{font-size:13.5px;color:var(--muted);margin-top:8px}
+.fml .fn{font-size:14px;margin-top:6px}

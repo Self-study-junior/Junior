@@ -360,3 +360,91 @@ LANDMARKS.geography = [
     const sign = new THREE.Mesh(new THREE.BoxGeometry(.8, .3, .04), [M(PAL.wood), M(PAL.wood), M(PAL.wood), M(PAL.wood), new THREE.MeshBasicMaterial({ map: textTex('地名', { w: 128, h: 48, size: 34, bg: '#2f6d3a', fg: '#fff' }) }), M(PAL.wood)]);
     sign.position.set(-.6, 1, .75); g.add(sign); g.add(cyl(.03, .03, 1, PAL.dark, -.6, 0, .73, 4)); } },
 ];
+
+// 理化：一單元一個物件
+const glassM = k => new k.THREE.MeshStandardMaterial({ color: '#d8eef6', transparent: true, opacity: .45, roughness: .15 });
+LANDMARKS.physchem = [
+  { n: 1, short: '量筒與尺', build: k => { const { g, cyl, box, PAL } = k;
+    g.add(cyl(.35, .4, .1, PAL.stoneD, -.3, 0, 0, 12)); const t = cyl(.24, .24, 1.8, '#d8eef6', -.3, .1, 0, 14); t.material = glassM(k); g.add(t); g.add(cyl(.22, .22, 1.1, '#5b8fd1', -.3, .1, 0, 14));
+    for (let i = 0; i < 8; i++) g.add(box(.12, .015, .02, PAL.dark, -.12, .25 + i * .2, .2));
+    const r = box(.18, .04, 1.6, '#f4c95d', .55, 0, .1); g.add(r); for (let i = 0; i < 9; i++) g.add(box(.08, .045, .015, PAL.dark, .5, 0, -.6 + i * .18)); } },
+  { n: 2, short: '燒杯與冰塊', build: k => { const { g, cyl, box, PAL } = k;
+    const b = cyl(.5, .45, 1, '#d8eef6', 0, 0, 0, 14); b.material = glassM(k); g.add(b); g.add(cyl(.44, .42, .55, '#9fd8e6', 0, .02, 0, 14));
+    const ice = box(.3, .3, .3, '#f4fbff', .1, .45, .05); ice.rotation.y = .5; g.add(ice); g.add(box(.25, .25, .25, '#f4fbff', .8, 0, .3)).children; } },
+  { n: 3, short: '音叉與聲波', build: k => { const { g, box, cyl, mesh, THREE, PAL, A } = k;
+    g.add(box(.6, .25, .4, PAL.woodD, 0, 0, 0)); g.add(cyl(.05, .05, .5, '#9aa3ac', 0, .25, 0, 6));
+    for (const x of [-.12, .12]) g.add(box(.06, 1, .06, '#c0c8d0', x, .75, 0)); g.add(box(.3, .06, .06, '#c0c8d0', 0, .72, 0));
+    const ws = [0, 1, 2].map(i => { const w = mesh(new THREE.TorusGeometry(.3, .025, 4, 24, Math.PI * .7), '#6a4fb0', 0, 1.3, 0); w.rotation.y = Math.PI / 2; w.rotation.x = -Math.PI * .35 + Math.PI / 2; g.add(w); return w; });
+    A(t => ws.forEach((w, i) => { const p = (t * .8 + i / 3) % 1; w.scale.setScalar(1 + p * 2.2); w.position.x = .2 + p * .6; w.material.transparent = true; w.material.opacity = 1 - p; })); } },
+  { n: 4, short: '三稜鏡與彩虹', build: k => { const { g, box, prism, PAL } = k;
+    const pr = prism(1, 1, .8, '#d8eef6', 0, 0, 0); pr.material = glassM(k); g.add(pr);
+    g.add(box(1.2, .06, .08, PAL.white, -1, .5, 0));
+    ['#e05a47', '#f39b5b', '#f4c95d', '#7fb069', '#5b8fd1', '#8e6ad8'].forEach((c, i) => { const b = box(1.1, .05, .08, c, .95, .55 - i * .07, 0); b.rotation.z = -.15 - i * .05; g.add(b); }); } },
+  { n: 5, short: '酒精燈與溫度計', build: k => { const { g, cyl, cone, ball, box, PAL, A } = k;
+    const lamp = cyl(.35, .4, .5, '#d8eef6', -.35, 0, 0, 12); lamp.material = glassM(k); g.add(lamp); g.add(cyl(.32, .37, .3, '#f2a7b5', -.35, 0, 0, 12)); g.add(cyl(.06, .06, .15, PAL.dark, -.35, .5, 0, 6));
+    const fl = cone(.12, .45, '#ffb347', -.35, .65, 0, 8); g.add(fl); A(t => { fl.scale.set(1, .85 + Math.sin(t * 12) * .15, 1); });
+    g.add(box(.5, .15, .4, PAL.stoneD, .5, 0, 0)); g.add(cyl(.07, .07, 1.6, PAL.white, .5, .15, 0, 8)); g.add(ball(.13, PAL.red, .5, .2, 0, 1)); g.add(cyl(.035, .035, .9, PAL.red, .5, .2, .02, 6)); } },
+  { n: 6, short: '原子模型', build: k => { const { g, ball, cyl, mesh, THREE, PAL, A } = k;
+    g.add(cyl(.4, .5, .3, PAL.stoneD, 0, 0, 0, 10)); const at = new THREE.Group(); at.position.y = 1.4; g.add(at);
+    [[.1, .05, 0, PAL.red], [-.1, 0, .05, '#9aa3ac'], [0, .12, -.08, PAL.red], [0, -.1, .02, '#9aa3ac']].forEach(([x, y, z, c]) => at.add(ball(.13, c, x, y, z, 1)));
+    for (let i = 0; i < 3; i++) { const o = new THREE.Group(); o.rotation.set(i * 1.05, i * .6, 0); at.add(o); o.add(mesh(new THREE.TorusGeometry(.75, .015, 4, 40), PAL.dark, 0, 0, 0)); const e = ball(.07, '#5b8fd1', .75, 0, 0, 0); o.add(e); A(t => { const a = t * (1.5 + i * .4); e.position.set(Math.cos(a) * .75, Math.sin(a) * .75, 0); }); } } },
+  { n: 7, short: '錐形瓶反應', build: k => { const { g, cyl, ball, PAL, A, THREE } = k;
+    const f = cyl(.15, .6, 1, '#d8eef6', 0, 0, 0, 14); f.material = glassM(k); g.add(f); g.add(cyl(.15, .15, .4, '#d8eef6', 0, 1, 0, 10)).children; g.children.at(-1).material = glassM(k);
+    g.add(cyl(.3, .56, .45, '#f39b5b', 0, .02, 0, 14));
+    for (let i = 0; i < 6; i++) { const b = ball(.05, '#fff', 0, 0, 0, 0); g.add(b); A(t => { const p = (t * .7 + i / 6) % 1; b.position.set(Math.sin(i * 2) * .2 * (1 - p), .1 + p * 1.4, Math.cos(i * 2) * .2 * (1 - p)); b.visible = p < .95; }); } } },
+  { n: 8, short: '酸鹼試管架', build: k => { const { g, box, cyl } = k;
+    g.add(box(1.8, .1, .5, '#9c6a40', 0, 0, 0)); g.add(box(1.8, .08, .5, '#9c6a40', 0, .55, 0)); for (const x of [-.85, .85]) g.add(box(.08, .6, .5, '#9c6a40', x, 0, 0));
+    ['#e05a47', '#f39b5b', '#f4c95d', '#7fb069', '#5b8fd1', '#8e6ad8'].forEach((c, i) => { const x = -.62 + i * .25; const t = cyl(.08, .08, .9, '#d8eef6', x, .1, 0, 10); t.material = glassM(k); g.add(t); g.add(cyl(.075, .075, .45, c, x, .12, 0, 10)); }); } },
+  { n: 9, short: '碼錶（反應速率）', build: k => { const { g, cyl, box, PAL, A } = k;
+    const face = cyl(.7, .7, .2, PAL.white, 0, 0, 0, 24); face.rotation.x = Math.PI / 2; face.position.set(0, 1.1, 0); g.add(face);
+    const rim = cyl(.75, .75, .16, '#6a4fb0', 0, 0, 0, 24); rim.rotation.x = Math.PI / 2; rim.position.set(0, 1.1, -.03); g.add(rim);
+    g.add(cyl(.1, .1, .25, '#6a4fb0', 0, 1.82, 0, 8)); g.add(box(.5, .35, .4, PAL.stoneD, 0, 0, 0)); g.add(box(.15, .4, .15, '#6a4fb0', 0, .35, 0));
+    const h = box(.04, .55, .03, PAL.red, 0, 0, 0); h.geometry.translate(0, .275, 0); h.position.set(0, 1.1, .12); g.add(h); A(t => { h.rotation.z = -t * 2; }); } },
+  { n: 10, short: '有機分子', build: k => { const { g, ball, cyl, PAL, A, THREE } = k;
+    g.add(cyl(.4, .5, .3, PAL.stoneD, 0, 0, 0, 10)); const m = new THREE.Group(); m.position.y = 1.3; g.add(m);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, x = Math.cos(a) * .55, y = Math.sin(a) * .55; m.add(ball(.13, PAL.dark, x, y, 0, 1)); m.add(ball(.08, PAL.white, x * 1.6, y * 1.6, 0, 1));
+      const b = cyl(.025, .025, .55, '#9aa3ac', 0, 0, 0, 4); b.position.set((x + Math.cos(a + 1.047) * .55) / 2, (y + Math.sin(a + 1.047) * .55) / 2, 0); b.rotation.z = a + 1.047 + Math.PI; m.add(b); }
+    A(t => { m.rotation.y = t * .5; }); } },
+  { n: 11, short: '彈簧秤', build: k => { const { g, box, cyl, mesh, THREE, PAL, A } = k;
+    g.add(box(.1, 2.2, .1, PAL.woodD, -.5, 0, 0)); g.add(box(.9, .1, .1, PAL.woodD, -.1, 2.2, 0));
+    const sp = new THREE.Group(); sp.position.set(.25, 2.2, 0); g.add(sp);
+    const coil = mesh(new THREE.CylinderGeometry(.12, .12, 1, 10, 1, true), '#9aa3ac', 0, -.5, 0); sp.add(coil); for (let i = 0; i < 8; i++) sp.add(mesh(new THREE.TorusGeometry(.12, .02, 4, 12), '#7a848c', 0, -.1 - i * .12, 0)).children; sp.children.forEach((c, i) => { if (i > 0) c.rotation.x = Math.PI / 2; });
+    const wt = box(.4, .35, .4, '#6a4fb0', 0, 0, 0); sp.add(wt); A(t => { const s = 1 + Math.sin(t * 3) * .12; sp.scale.y = s; wt.position.y = -1.3; wt.scale.y = 1 / s; }); } },
+  { n: 12, short: '斜坡小車', build: k => { const { g, box, cyl, PAL, A, THREE } = k;
+    const ramp = box(2.2, .08, .6, PAL.wood, 0, 0, 0); ramp.rotation.z = .3; ramp.position.y = .35; g.add(ramp); g.add(box(.1, .7, .6, PAL.woodD, .95, 0, 0));
+    const car = new THREE.Group(); g.add(car); car.add(box(.4, .2, .3, '#e05a47', 0, .1, 0)); for (const x of [-.13, .13]) for (const z of [-.17, .17]) { const w = cyl(.07, .07, .04, PAL.dark, x, 0, z, 8); w.rotation.x = Math.PI / 2; w.position.y = .07; car.add(w); }
+    A(t => { const p = (t * .35) % 1; const x = .85 - p * 1.7; car.position.set(x, .38 + x * Math.tan(.3) + .02, 0); car.rotation.z = .3; }); } },
+  { n: 13, short: '牛頓擺', build: k => { const { g, box, cyl, ball, PAL, A, THREE } = k;
+    g.add(box(1.6, .1, .7, PAL.dark, 0, 0, 0)); for (const x of [-.75, .75]) for (const z of [-.3, .3]) g.add(cyl(.03, .03, 1.5, '#c0c8d0', x, .1, z, 4)); for (const z of [-.3, .3]) g.add(box(1.55, .04, .04, '#c0c8d0', 0, 1.6, z));
+    const bs = [-.4, -.2, 0, .2, .4].map((x, i) => { const p = new THREE.Group(); p.position.set(x, 1.6, 0); g.add(p); p.add(cyl(.008, .008, 1, '#4a443e', 0, -1, 0, 3)); p.add(ball(.1, '#c0c8d0', 0, -1.05, 0, 1)); return p; });
+    A(t => { const s = Math.sin(t * 3); bs[0].rotation.z = s < 0 ? s * .6 : 0; bs[4].rotation.z = s > 0 ? s * .6 : 0; }); } },
+  { n: 14, short: '滑輪（功與能）', build: k => { const { g, box, cyl, PAL, A } = k;
+    g.add(box(.1, 2.3, .1, PAL.woodD, -.6, 0, 0)); g.add(box(1, .1, .1, PAL.woodD, -.15, 2.3, 0));
+    const wh = cyl(.25, .25, .1, '#9aa3ac', 0, 0, 0, 16); wh.rotation.x = Math.PI / 2; wh.position.set(.25, 2.05, 0); g.add(wh);
+    const r1 = box(.02, 1, .02, PAL.dark, 0, 0, 0), r2 = box(.02, 1, .02, PAL.dark, 0, 0, 0); g.add(r1, r2);
+    const wt = box(.35, .35, .35, '#6a4fb0', 0, 0, 0), hand = box(.15, .15, .15, PAL.yellow, 0, 0, 0); g.add(wt, hand);
+    A(t => { const y = 1 + Math.sin(t * 1.2) * .5; wt.position.set(.5, y - .18, 0); hand.position.set(0, 2.6 - y - .3, 0); r1.scale.y = 2.05 - y; r1.position.set(.5, (2.05 + y) / 2, 0); r2.scale.y = y - .25; r2.position.set(0, 2.05 - (y - .25) / 2, 0); wh.rotation.z = -y * 3; }); } },
+  { n: 15, short: '電池與燈泡', build: k => { const { g, box, cyl, ball, PAL, M, A } = k;
+    g.add(box(1.8, .08, 1, PAL.wood, 0, 0, 0)); g.add(cyl(.18, .18, .7, '#2b2b2b', -.5, .08, .2, 12)).children; g.children.at(-1).rotation.z = Math.PI / 2; g.children.at(-1).position.set(-.5, .26, .2); g.add(box(.08, .1, .1, '#c0c8d0', -.11, .22, .2));
+    g.add(cyl(.08, .1, .25, '#9aa3ac', .55, .08, .2, 8)); const bulb = ball(.25, '#fff3c4', .55, .55, .2, 1); bulb.material = M('#fff3c4', { emissive: '#ffd34d', emissiveIntensity: .8 }); g.add(bulb);
+    for (const [x1, x2] of [[-.85, .45], [-.15, .65]]) g.add(box(Math.abs(x2 - x1), .02, .02, '#e05a47', (x1 + x2) / 2, .1, -.25));
+    A(t => { bulb.material.emissiveIntensity = .6 + Math.sin(t * 2) * .25; }); } },
+  { n: 16, short: '電風扇與插座', build: k => { const { g, box, cyl, PAL, A, THREE } = k;
+    g.add(cyl(.35, .4, .1, PAL.white, 0, 0, 0, 12)); g.add(cyl(.05, .05, 1.2, PAL.white, 0, .1, 0, 6));
+    const head = new THREE.Group(); head.position.set(0, 1.4, .1); g.add(head); head.add(cyl(.12, .12, .25, PAL.white, 0, 0, -.1, 8)).children; head.children.at(-1).rotation.x = Math.PI / 2;
+    const bl = new THREE.Group(); bl.position.z = .1; head.add(bl); for (let i = 0; i < 3; i++) { const b = box(.16, .5, .02, '#5b8fd1', 0, .25, 0); const p = new THREE.Group(); p.rotation.z = i * 2.094; p.add(b); bl.add(p); }
+    A(t => { bl.rotation.z = t * 10; head.rotation.y = Math.sin(t * .6) * .5; });
+    g.add(box(.4, .5, .08, PAL.white, .8, 0, -.3)); g.add(box(.04, .12, .02, PAL.dark, .73, .25, -.25)); g.add(box(.04, .12, .02, PAL.dark, .87, .25, -.25)); } },
+  { n: 17, short: '大電池', build: k => { const { g, cyl, box, PAL } = k;
+    g.add(cyl(.45, .45, 1.6, '#2f8a63', 0, 0, 0, 16)); g.add(cyl(.46, .46, .5, '#f4c95d', 0, 1.1, 0, 16)); g.add(cyl(.15, .15, .15, '#c0c8d0', 0, 1.6, 0, 10));
+    g.add(box(.3, .08, .02, PAL.white, 0, .5, .46)); g.add(box(.08, .3, .02, PAL.white, 0, .5, .46));
+    g.add(cyl(.25, .25, .5, '#f4e04d', .8, 0, .3, 10)).children; } },
+  { n: 18, short: '馬蹄形磁鐵', build: k => { const { g, mesh, box, cyl, THREE, PAL, A } = k;
+    const u = mesh(new THREE.TorusGeometry(.5, .17, 8, 20, Math.PI), '#e05a47', 0, 1.4, 0); u.rotation.z = 0; g.add(u);
+    g.add(box(.34, .7, .34, '#e05a47', -.5, .7, 0)); g.add(box(.34, .7, .34, '#5b8fd1', .5, .7, 0)); g.add(box(.36, .2, .36, '#d8d8d8', -.5, .5, 0)); g.add(box(.36, .2, .36, '#d8d8d8', .5, .5, 0));
+    const cp = new THREE.Group(); cp.position.set(0, 0, .8); g.add(cp); cp.add(cyl(.3, .3, .08, PAL.white, 0, 0, 0, 16)); const nd = box(.05, .02, .45, PAL.red, 0, .1, 0); cp.add(nd); A(t => { nd.rotation.y = Math.sin(t * 1.5) * .6; }); } },
+  { n: 19, short: '太陽能板', build: k => { const { g, box, cyl, ball, PAL, M, A } = k;
+    g.add(box(.1, .8, .1, '#9aa3ac', 0, 0, 0)); const p = box(1.8, .06, 1.1, '#2b3a73', 0, .8, 0); p.rotation.x = -.5; g.add(p);
+    for (let i = 0; i < 4; i++) { const l = box(.02, .07, 1.1, '#9fb8e6', -.68 + i * .45, .8, 0); l.rotation.x = -.5; g.add(l); }
+    const sun = ball(.3, '#ffd34d', -.6, 2.3, -.6, 1); sun.material = M('#ffd34d', { emissive: '#ffb300', emissiveIntensity: .5 }); g.add(sun); A(t => { sun.position.y = 2.3 + Math.sin(t) * .1; }); } },
+];

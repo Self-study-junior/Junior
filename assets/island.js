@@ -31,7 +31,7 @@ const THEME = {
   hub: { top: '#f3e5cf', c: '#e2673c' },
   english: { top: '#cfe8ea', c: '#1a8a96' }, biology: { top: '#cfe6bb', c: '#2f8a63' }, earth: { top: '#ead7bd', c: '#9a6a3a' },
   history: { top: '#dcdcee', c: '#3d4f9a' }, civics: { top: '#f3d6d6', c: '#c7475a' },
-  chinese: { top: '#f1ddd4', c: '#a8453a' }, math: { top: '#e9e3da', c: '#8a817a' }, physchem: { top: '#e9e3da', c: '#8a817a' }, geography: { top: '#f3e4cc', c: '#b8701f' },
+  chinese: { top: '#f1ddd4', c: '#a8453a' }, math: { top: '#e9e3da', c: '#8a817a' }, physchem: { top: '#e6e0f3', c: '#6a4fb0' }, geography: { top: '#f3e4cc', c: '#b8701f' },
 };
 const MC = {};
 const M = (c, o = {}) => MC[c + JSON.stringify(o)] ||= new THREE.MeshStandardMaterial({ color: c, roughness: .95, metalness: 0, flatShading: true, ...o });

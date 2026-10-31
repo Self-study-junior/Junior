@@ -2,13 +2,13 @@
 
 國中會考重點筆記網站（只有筆記，不含題庫）。純靜態網頁，不需要任何建置工具，可直接用 GitHub Pages 發布。
 
-目前科目：國文、英語、生物、地科、歷史、地理、公民。數學、理化整理中。
+目前科目：國文、英語、生物、理化、地科、歷史、地理、公民。數學整理中。
 
 ## 網站結構
 
 ```
 index.html            首頁
-<科目>/index.html      各科筆記頁（chinese 國文、civics 公民、history 歷史、biology 生物、earth 地科、english 英語、geography 地理）
+<科目>/index.html      各科筆記頁（chinese 國文、civics 公民、history 歷史、biology 生物、earth 地科、english 英語、geography 地理、physchem 理化）
 data/<科目>.js         各科筆記資料
 data/summary.js        首頁用的各科統計（由 extract.mjs 自動產生）
 assets/                樣式與程式（style.css、common.js、notes.js、english.js、home.js、subjects.js）
