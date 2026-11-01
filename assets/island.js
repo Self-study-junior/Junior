@@ -222,7 +222,7 @@ function buildSubject(g, id, theme, it) {
     const plinth = cyl(pr, pr + .1, .3, tint(theme.c, .55), 0, 0, 0, 16); w.add(plinth);
     const inner = new THREE.Group(); inner.position.y = .3; if (few) inner.scale.setScalar(1.4); w.add(inner);
     d.build({ ...kit, g: inner });
-    const sp = numSprite(d.n ? String(d.n) : d.key === 'chrono' ? '年' : '★', theme.c); sp.position.set(0, .55, pr + .15); w.add(sp);
+    const sp = numSprite(d.n ? String(d.n) : d.key === 'chrono' ? '年' : d.key === 'valence' ? '價' : '★', theme.c); sp.position.set(0, .55, pr + .15); w.add(sp);
     const key = d.key || 'u' + d.n;
     const lm = { def: d, it, group: w, plinth, sprite: sp, key, pr };
     if (VISITED.has(id + '|' + key)) addStamp(lm);
@@ -382,6 +382,7 @@ function lmInfo(lm) {   // 地標的標題、說明、重點、連結
     return { k: 'STRATEGY', t: d.title, s: `${st ? st[1].length : ''} 則${area}方法與解題步驟。`, h: st ? st[1] : [], href: d.href };
   }
   if (d.key === 'chrono') return { k: 'TIMELINE', t: d.title, s: d.desc, h: [], href: d.href };
+  if (d.key === 'valence') return { k: 'TABLE', t: d.title, s: d.desc, h: ['＋1 價', '＋2 價', '＋3 價', '－1 價', '－2 價', '化學式寫法', '容易搞混'], href: d.href };
   const u = (SUM[id]?.list || []).find(x => x.n === d.n) || {};
   return { k: `${lm.it.s.name} · 單元 ${d.n}`, t: `${d.n}．${u.t || d.short}`, s: u.s || '', h: u.h || [], href: `../${id}/#u${d.n}`, part: u.p };
 }
@@ -392,7 +393,7 @@ function showLandmark(lm) {
     <div class="en">島上的「${esc(lm.def.short)}」${seen(lm) ? '　<span class="done">✓ 已讀過</span>' : '　<span class="new">還沒讀過，去看看！</span>'}</div>
     ${x.s ? `<p>${esc(x.s)}</p>` : ''}
     ${x.h.length ? `<div class="chips">${x.h.map(h => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
-    <a class="go" href="${x.href}">閱讀這個${lm.it.id === 'english' ? '主題' : lm.def.key === 'chrono' ? '年表' : '單元'} →</a>
+    <a class="go" href="${x.href}">閱讀這個${lm.it.id === 'english' ? '主題' : lm.def.key === 'chrono' ? '年表' : lm.def.key === 'valence' ? '表' : '單元'} →</a>
     <button class="back" type="button">← 回到${esc(lm.it.s.name)}島</button>`;
   info.querySelector('.x').onclick = () => { info.hidden = true; selectLm(null); };
   info.querySelector('.back').onclick = () => focus(lm.it);
@@ -416,7 +417,7 @@ function showInfo(it) {
       <div class="stats">${stats.map(([v, t]) => `<div><b>${(v || 0).toLocaleString()}</b><span>${t}</span></div>`).join('')}</div>
       ${(() => { const n = it.landmarks.length, v = it.landmarks.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${n ? v / n * 100 : 0}%"></i></div><span>已探索 <b>${v}</b> / ${n}${v === n && n ? '　🏆 全部探索完成！' : ''}</span></div>`; })()}
       <div class="hint2">島上每個物件代表一個${s.id === 'english' ? '類別' : '單元'}，讀過的會插上 🚩 黃色小旗。點物件或下面的名稱就能前往。</div>
-      <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span>${seen(lm) ? '<em>✓</em>' : ''}</button>`; }).join('')}</div>
+      <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.key === 'valence' ? '價' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span>${seen(lm) ? '<em>✓</em>' : ''}</button>`; }).join('')}</div>
       <a class="go" href="../${s.id}/">走進${esc(s.name)}筆記 →</a>`;
     info.querySelectorAll('.units button').forEach(b => {
       const lm = it.landmarks[+b.dataset.i];
@@ -630,7 +631,7 @@ function renderNear(n) {
     const x = lmInfo(n.lm); c = n.lm.it.theme.c; walk.near = { href: x.href };
     html = `<div class="k">${esc(n.lm.it.s.name)}島 · 島上的「${esc(n.lm.def.short)}」</div><b>${esc(x.t)}</b>
       <small>${seen(n.lm) ? '<span class="done">✓ 已讀過</span>' : '還沒讀過，進去看看吧！'}</small>
-      <div class="acts"><a href="${x.href}">進入${n.lm.it.id === 'english' ? '主題' : n.lm.def.key === 'chrono' ? '年表' : '單元'} →</a><button type="button" data-a="peek">看重點</button></div>`;
+      <div class="acts"><a href="${x.href}">進入${n.lm.it.id === 'english' ? '主題' : n.lm.def.key === 'chrono' ? '年表' : lm.def.key === 'valence' ? '表' : '單元'} →</a><button type="button" data-a="peek">看重點</button></div>`;
   } else if (n.it) {
     const s = n.it.s, v = n.it.landmarks.filter(seen).length; c = n.it.theme.c; walk.near = { href: `../${s.id}/` };
     html = `<div class="k">${esc(s.en.toUpperCase())}</div><b>${esc(s.name)}島的科目碑</b><small>已探索 ${v} / ${n.it.landmarks.length} 個${s.id === 'english' ? '類別' : '單元'}</small>

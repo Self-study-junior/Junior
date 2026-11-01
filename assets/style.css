@@ -341,3 +341,26 @@ table.vt td.z.show>*{color:inherit;background:none}
 .fml .eq{font-family:var(--en),var(--serif);font-size:17px;padding:8px 12px;border-radius:8px;background:var(--accent-soft);line-height:1.5}
 .fml .vars{font-size:13.5px;color:var(--muted);margin-top:8px}
 .fml .fn{font-size:14px;margin-top:6px}
+
+/* 理化：價數表 */
+.vtab{display:grid;gap:10px}
+.vrow{display:grid;grid-template-columns:88px 1fr;gap:12px;align-items:stretch;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.vq{display:grid;place-items:center;border-radius:10px;font-family:var(--serif);font-weight:900;font-size:18px;color:#fff}
+.vq.pos{background:#d0533f}.vq.neg{background:#3b6fb6}
+.vcells{display:flex;flex-wrap:wrap;gap:8px}
+.vc{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:84px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:default;font:inherit;color:var(--ink)}
+.vc.grp{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.vc .vn{font-size:13px;color:var(--muted)}
+.vc .vn i{font-style:normal;color:var(--accent);margin-left:2px}
+.vc .vs{font-family:var(--en);font-size:20px;font-weight:600;line-height:1.3}
+.vc sup{font-size:.62em}.vc sub{font-size:.62em}
+.vtab.hide .vc{cursor:pointer}
+.vtab.hide .vc .vs{color:transparent;background:repeating-linear-gradient(-45deg,var(--chip) 0 6px,transparent 6px 12px);border-radius:6px;min-width:56px}
+.vtab.hide .vc.show .vs{color:inherit;background:none}
+.vleg{display:inline-flex;gap:8px;align-items:center}
+.vc.mini{min-width:0;padding:3px 10px;font-size:12.5px;flex-direction:row}
+.vnote{font-size:13px;color:var(--muted);margin:12px 0 0}
+.vrule{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px 14px 2.2em;box-shadow:var(--shadow);margin:0 0 14px}
+.vrule li{margin:5px 0}
+.fml .vf{color:var(--accent);font-weight:700}
+@media (max-width:560px){.vrow{grid-template-columns:1fr;gap:8px;padding:10px}.vq{justify-self:start;padding:2px 14px;font-size:15px;border-radius:999px}.vc{min-width:70px;padding:6px 8px}.vc .vs{font-size:18px}}

@@ -99,4 +99,6 @@
   }
 
   window.CHRONO = { html, bind, parse };
+  // 筆記頁的「總整理」頁
+  window.EXTRA = { key: 'chrono', mark: '年', side: '大事年表（臺灣・亞洲・歐洲）', title: '大事年表', html, bind };
 })();

@@ -447,4 +447,10 @@ LANDMARKS.physchem = [
     g.add(box(.1, .8, .1, '#9aa3ac', 0, 0, 0)); const p = box(1.8, .06, 1.1, '#2b3a73', 0, .8, 0); p.rotation.x = -.5; g.add(p);
     for (let i = 0; i < 4; i++) { const l = box(.02, .07, 1.1, '#9fb8e6', -.68 + i * .45, .8, 0); l.rotation.x = -.5; g.add(l); }
     const sun = ball(.3, '#ffd34d', -.6, 2.3, -.6, 1); sun.material = M('#ffd34d', { emissive: '#ffb300', emissiveIntensity: .5 }); g.add(sun); A(t => { sun.position.y = 2.3 + Math.sin(t) * .1; }); } },
+  { key: 'valence', short: '價數表', title: '價數表（離子與原子團）', href: '../physchem/#valence', desc: '常見離子與原子團的價數、化學式寫法與命名，可遮住符號自我測驗。',
+    build: k => { const { g, box, PAL } = k;
+      g.add(box(.08, 1.6, .08, PAL.woodD, -.8, 0, 0)); g.add(box(.08, 1.6, .08, PAL.woodD, .8, 0, 0));
+      const rows = ['#d0533f', '#d0533f', '#d0533f', '#3b6fb6', '#3b6fb6'];
+      rows.forEach((c, r) => { g.add(box(.3, .22, .06, c, -.55, 1.55 - r * .27, 0)); for (let i = 0; i < 4 - (r === 2 ? 2 : 0); i++) g.add(box(.22, .22, .05, r % 3 === 1 ? '#ebe4f7' : PAL.white, -.22 + i * .26, 1.55 - r * .27, 0)); });
+      g.add(box(1.7, 1.45, .04, '#f7f3ea', 0, .32 + .3, -.04)); } },
 ];
