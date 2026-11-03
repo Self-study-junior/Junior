@@ -103,7 +103,9 @@ small{color:var(--mut)}
 const WRITE_UUID  = "0000fa02-0000-1000-8000-00805f9b34fb";
 const NOTIFY_UUID = "0000fa03-0000-1000-8000-00805f9b34fb";
 // 服務 UUID 未在文件中確認，列出常見候選，連上後自動找含 fa02 的服務
-const SERVICE_CANDIDATES = [0xfa00,0xfa01,0xae00,0xae30,0xffe0,0xfff0,0xfee7,0xff00];
+// Bluefy 只吃完整 128-bit 字串，不吃數字縮寫（會報 Request payload could not be parsed）
+const SERVICE_CANDIDATES = ["fa00","fa01","ae00","ae30","ffe0","fff0","fee7","ff00"]
+  .map(x=>"0000"+x+"-0000-1000-8000-00805f9b34fb");
 const CHUNK = 244, WINDOW = 12*1024, ACK_TIMEOUT = 8000;
 const W = 96, H = 16;
 
