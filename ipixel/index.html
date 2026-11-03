@@ -35,6 +35,7 @@ small{color:var(--mut)}
   <h2>1. 連線</h2>
   <div class="row">
     <button id="bConnect">連線 LED</button>
+    <button id="bScanAll" class="sec">列出全部藍牙裝置</button>
     <button id="bDisc" class="sec" disabled>中斷</button>
     <span id="status">未連線</span>
   </div>
@@ -44,6 +45,7 @@ small{color:var(--mut)}
     <label>亮度 <input id="bri" type="range" min="1" max="100" value="60"></label>
     <span id="briV">60</span>
   </div>
+  <div id="connMsg" style="margin-top:6px"></div>
   <small id="support"></small>
 </section>
 
@@ -177,27 +179,34 @@ $("support").textContent = navigator.bluetooth ? "此瀏覽器支援 Web Bluetoo
   "此瀏覽器不支援 Web Bluetooth。iPhone 請用 Bluefy 瀏覽器開這頁；Android／電腦請用 Chrome 或 Edge。";
 function setConn(on){
   document.querySelectorAll(".act").forEach(b=>b.disabled=!on);
-  $("bDisc").disabled=!on; $("bConnect").disabled=on;
+  $("bDisc").disabled=!on; $("bConnect").disabled=on; $("bScanAll").disabled=on;
   $("status").textContent = on ? "已連線："+(dev?.name||"") : "未連線";
   $("status").className = on ? "ok" : "";
 }
 function setBusy(b){ document.querySelectorAll(".act").forEach(x=>x.disabled=b||!wr); }
-$("bConnect").onclick = async ()=>{
+function connMsg(t,cls){ const e=$("connMsg"); e.textContent=t; e.className=cls||""; }
+async function connect(all){
+  if(!navigator.bluetooth){ connMsg("這個瀏覽器沒有藍牙功能，請用 Bluefy 開。","bad"); return; }
+  connMsg("正在開啟藍牙選擇視窗…（若沒跳出，請看下方說明）");
+  log(all?"掃描全部裝置…":"掃描 LED 開頭的裝置…");
   try{
-    dev = await navigator.bluetooth.requestDevice({
-      filters:[{namePrefix:"LED"}], optionalServices: SERVICE_CANDIDATES });
+    try{ const ok = navigator.bluetooth.getAvailability ? await navigator.bluetooth.getAvailability() : true;
+      if(!ok){ connMsg("手機藍牙沒開，或沒允許 Bluefy 使用藍牙（設定 → Bluefy → 藍牙）。","bad"); log("藍牙不可用","bad"); return; } }catch(e){}
+    const opt = all ? {acceptAllDevices:true, optionalServices:SERVICE_CANDIDATES}
+                    : {filters:[{namePrefix:"LED"}], optionalServices:SERVICE_CANDIDATES};
+    dev = await navigator.bluetooth.requestDevice(opt);
     dev.addEventListener("gattserverdisconnected",()=>{ wr=null; setConn(false); log("裝置已中斷","bad"); });
-    log("連線 "+dev.name+" …");
+    log("選到裝置："+(dev.name||"(無名稱)")+"，連線中…"); connMsg("連線中…");
     const srv = await dev.gatt.connect();
     let svcs = [];
-    try{ svcs = await srv.getPrimaryServices(); }catch(e){}
-    log("找到服務："+svcs.map(s=>s.uuid.slice(4,8)).join(", "));
+    try{ svcs = await srv.getPrimaryServices(); }catch(e){ log("讀服務清單失敗："+e.message,"bad"); }
+    log("找到服務："+(svcs.map(s=>s.uuid).join(", ")||"(無)"));
     for (const s of svcs){
       try{ wr = await s.getCharacteristic(WRITE_UUID); nt = await s.getCharacteristic(NOTIFY_UUID); break; }catch(e){ wr=null; }
     }
-    if(!wr) throw new Error("找不到 fa02 寫入特徵值（服務 UUID 不在候選名單裡，請把上面「找到服務」那行告訴開發者）");
+    if(!wr) throw new Error("找不到 fa02 寫入特徵值，請把紀錄裡「找到服務」那行截圖給開發者");
     await nt.startNotifications(); nt.addEventListener("characteristicvaluechanged", onNotify);
-    setConn(true);
+    setConn(true); connMsg("已連線","ok");
     const n = new Date();
     const r = await sendCmd("讀取裝置資訊",[8,0,1,0x80,n.getHours(),n.getMinutes(),n.getSeconds(),0]);
     if(r && r.length>=5){
@@ -205,8 +214,14 @@ $("bConnect").onclick = async ()=>{
       const sz = map[t]||("未知型號 "+t);
       log("裝置螢幕："+sz, sz==="96×16"?"ok":"bad");
     }
-  }catch(e){ log("連線失敗："+e.message,"bad"); }
-};
+  }catch(e){
+    const m = e.name==="NotFoundError" ? (all?"沒有選裝置，或附近找不到裝置。":"找不到 LED 開頭的裝置。請先完全關掉 iPixel Color App（它連著時 LED 不會被別人看到），再試；或改按「列出全部藍牙裝置」。")
+            : e.message;
+    connMsg("連線失敗："+m,"bad"); log("連線失敗："+e.name+" "+e.message,"bad");
+  }
+}
+$("bConnect").onclick = ()=>connect(false);
+$("bScanAll").onclick = ()=>connect(true);
 $("bDisc").onclick = ()=>{ dev?.gatt?.disconnect(); };
 $("bOn").onclick  = ()=>sendCmd("開機",[5,0,7,1,1]);
 $("bOff").onclick = ()=>sendCmd("關機",[5,0,7,1,0]);
