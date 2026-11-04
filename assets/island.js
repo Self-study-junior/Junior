@@ -31,7 +31,7 @@ const THEME = {
   hub: { top: '#f3e5cf', c: '#e2673c' },
   english: { top: '#cfe8ea', c: '#1a8a96' }, biology: { top: '#cfe6bb', c: '#2f8a63' }, earth: { top: '#ead7bd', c: '#9a6a3a' },
   history: { top: '#dcdcee', c: '#3d4f9a' }, civics: { top: '#f3d6d6', c: '#c7475a' },
-  chinese: { top: '#f1ddd4', c: '#a8453a' }, math: { top: '#e9e3da', c: '#8a817a' }, physchem: { top: '#e6e0f3', c: '#6a4fb0' }, geography: { top: '#f3e4cc', c: '#b8701f' },
+  chinese: { top: '#f1ddd4', c: '#a8453a' }, math: { top: '#f3dbe6', c: '#a8326e' }, physchem: { top: '#e6e0f3', c: '#6a4fb0' }, geography: { top: '#f3e4cc', c: '#b8701f' },
 };
 const MC = {};
 const M = (c, o = {}) => MC[c + JSON.stringify(o)] ||= new THREE.MeshStandardMaterial({ color: c, roughness: .95, metalness: 0, flatShading: true, ...o });
@@ -357,7 +357,7 @@ function updateLabels() {
 
 // ---------- 清單 ----------
 const ready = SUBJ.filter(s => s.ready);
-$('listSub').textContent = `${ready.length} 座已開放的島 ／ ${SUBJ.length - ready.length} 座整理中。選一座島，走進它的重點筆記。`;
+$('listSub').textContent = `${ready.length} 座已開放的島${SUBJ.length > ready.length ? ` ／ ${SUBJ.length - ready.length} 座整理中` : '，全部開放'}。選一座島，走進它的重點筆記。`;
 $('listBody').innerHTML = SUBJ.map(s => {
   const it = islands.find(i => i.id === s.id); if (!it) return '';
   const x = SUM[s.id] || {};
@@ -403,7 +403,7 @@ function showInfo(it) {
   info.style.setProperty('--c', c); info.hidden = false;
   if (it.id === 'hub') {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">STUDY CENTER</div><h3>學習中心</h3><div class="en">國中自學筆記</div>
-      <p>這裡是群島的中心。從廣場走過木橋，就能到每一科的島。已開放 ${ready.length} 座島，${SUBJ.filter(x => !x.ready).map(x => x.name).join('、')}還在整理中。</p>
+      <p>這裡是群島的中心。從廣場走過木橋，就能到每一科的島。已開放 ${ready.length} 座島${SUBJ.some(x => !x.ready) ? `，${SUBJ.filter(x => !x.ready).map(x => x.name).join('、')}還在整理中` : '，每一科都開放了'}。</p>
       ${(() => { const all = islands.flatMap(i => i.landmarks), v = all.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${all.length ? v / all.length * 100 : 0}%"></i></div><span>整座群島已探索 <b>${v}</b> / ${all.length}</span></div>`; })()}
       <a class="go" href="../">打開一般版首頁（含全站搜尋） →</a>`;
   } else if (!s.ready) {

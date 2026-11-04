@@ -31,6 +31,7 @@
     const blocks = [['secs', '重點整理']];
     if (u.formulas) blocks.push(['fml', '重要公式']);
     if (u.experiments) blocks.push(['exp', '重要實驗']);
+    if (u.examples) blocks.push(['ex', '代表例題']);
     if (u.timeline) blocks.push(['tl', '年代軸']);
     if (u.sources) blocks.push(['srcs', '史料判讀']);
     if (u.confusions.length) blocks.push(['conf', '易混淆觀念']);
@@ -53,6 +54,9 @@
       ${u.experiments ? `<h2 class="blk-h" id="exp">重要實驗 <small>${u.experiments.length} 個</small></h2>
       <div class="exps">${u.experiments.map(x => `<article class="exp"><h3>${esc(x.name)}</h3><dl>
         <dt>目的</dt><dd>${esc(x.purpose)}</dd><dt>步驟</dt><dd>${esc(x.steps)}</dd><dt>結果</dt><dd>${esc(x.result)}</dd><dt>易錯提醒</dt><dd class="pit">${esc(x.pitfall)}</dd></dl></article>`).join('')}</div>` : ''}
+
+      ${u.examples ? `<h2 class="blk-h" id="ex">代表例題 <small>${u.examples.length} 題．先自己想，再按「看解法」</small></h2>
+      <div class="exs">${u.examples.map((x, j) => `<article class="exq"><div class="fh">例 ${j + 1}${x.heading ? '．' + esc(x.heading) : ''}</div><div class="q">${esc(x.q)}</div><details><summary>看解法</summary><dl><dt>解法</dt><dd>${esc(x.steps)}</dd><dt>答案</dt><dd class="ans">${esc(x.ans)}</dd>${x.pitfall ? `<dt>易錯提醒</dt><dd class="pit">${esc(x.pitfall)}</dd>` : ''}</dl></details></article>`).join('')}</div>` : ''}
 
       ${u.timeline ? `<h2 class="blk-h" id="tl">年代軸</h2>
       <ol class="tl">${u.timeline.map(t => `<li><span class="t">${esc(t.time)}</span><span class="e">${esc(t.event)}</span></li>`).join('')}</ol>` : ''}
@@ -83,6 +87,7 @@
     u.confusions.forEach(c => rows.push({ u, where: '易混淆觀念', text: `${c.a} vs. ${c.b}：${c.diff}；${c.tip}`, to: 'conf' }));
     (u.formulas || []).forEach(f => rows.push({ u, where: '重要公式', text: [f.name, f.formula, f.vars, f.note].join('　'), to: 'fml' }));
     (u.experiments || []).forEach(x => rows.push({ u, where: '重要實驗', text: [x.name, x.purpose, x.steps, x.result, x.pitfall].join('　'), to: 'exp' }));
+    (u.examples || []).forEach(x => rows.push({ u, where: '代表例題', text: [x.q, x.steps, x.ans, x.pitfall].join('　'), to: 'ex' }));
     (u.timeline || []).forEach(t => rows.push({ u, where: '年代軸', text: t.time + '　' + t.event, to: 'tl' }));
     (u.sources || []).forEach(s => rows.push({ u, where: '史料判讀', text: [s.name, s.gist, s.clue].join('　'), to: 'srcs' }));
   });

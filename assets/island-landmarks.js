@@ -454,3 +454,106 @@ LANDMARKS.physchem = [
       rows.forEach((c, r) => { g.add(box(.3, .22, .06, c, -.55, 1.55 - r * .27, 0)); for (let i = 0; i < 4 - (r === 2 ? 2 : 0); i++) g.add(box(.22, .22, .05, r % 3 === 1 ? '#ebe4f7' : PAL.white, -.22 + i * .26, 1.55 - r * .27, 0)); });
       g.add(box(1.7, 1.45, .04, '#f7f3ea', 0, .32 + .3, -.04)); } },
 ];
+
+// 數學：一單元一個物件
+const triShape = (k, pts) => { const s = new k.THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(([x, y]) => s.lineTo(x, y)); s.closePath(); return s; };
+const extrude = (k, pts, d, c, x, y, z) => { const geo = new k.THREE.ExtrudeGeometry(triShape(k, pts), { depth: d, bevelEnabled: false }); geo.translate(0, 0, -d / 2); return k.mesh(geo, c, x, y, z); };
+const signFace = (k, text, w, h, bg, size) => { const { THREE, M, PAL, textTex } = k; return new THREE.Mesh(new THREE.BoxGeometry(w, h, .05), [M(PAL.wood), M(PAL.wood), M(PAL.wood), M(PAL.wood), new THREE.MeshBasicMaterial({ map: textTex(text, { w: 256, h: Math.round(256 * h / w), size, bg, fg: '#fff' }) }), M(PAL.wood)]); };
+LANDMARKS.math = [
+  { n: 1, short: '數線', build: k => { const { g, box, cone, ball, PAL } = k;
+    for (const x of [-1, 1]) g.add(box(.1, .5, .1, PAL.woodD, x, 0, 0));
+    g.add(box(2.5, .08, .1, PAL.dark, 0, .5, 0)); const ar = cone(.12, .26, PAL.dark, 0, 0, 0, 6); ar.rotation.z = -Math.PI / 2; ar.position.set(1.32, .54, 0); g.add(ar);
+    for (let i = -4; i <= 4; i++) g.add(box(.04, .26, .05, i === 0 ? PAL.red : PAL.dark, i * .27, .42, 0));
+    g.add(ball(.11, PAL.blue, -.81, .74, 0, 1)); g.add(ball(.11, PAL.blue, .81, .74, 0, 1)); } },
+  { n: 2, short: '分數派', build: k => { const { g, mesh, THREE, PAL, A } = k;
+    g.add(mesh(new THREE.CylinderGeometry(.95, .95, .3, 24, 1, false, 0, Math.PI * 1.5), PAL.yellow, 0, .15, 0));
+    const sl = mesh(new THREE.CylinderGeometry(.95, .95, .3, 8, 1, false, Math.PI * 1.5, Math.PI * .5), PAL.red, -.22, .15, .22); g.add(sl);
+    A(t => { sl.position.y = .2 + Math.abs(Math.sin(t * 1.5)) * .35; }); } },
+  { n: 3, short: '天平（方程式）', build: k => { const { g, box, cyl, THREE, PAL, A } = k;
+    g.add(box(1, .12, .5, PAL.woodD, 0, 0, 0)); g.add(cyl(.06, .06, 1.45, PAL.dark, 0, .12, 0, 6));
+    const bm = new THREE.Group(); bm.position.y = 1.6; g.add(bm); bm.add(box(2, .07, .07, PAL.dark, 0, -.035, 0));
+    for (const x of [-.9, .9]) { bm.add(cyl(.01, .01, .5, PAL.dark, x, -.5, 0, 3)); bm.add(cyl(.36, .3, .06, '#c0c8d0', x, -.56, 0, 12)); }
+    bm.add(box(.26, .26, .26, PAL.blue, -.9, -.5, 0)); bm.add(box(.18, .18, .18, PAL.red, .8, -.5, 0)); bm.add(box(.18, .18, .18, PAL.red, 1, -.5, 0));
+    A(t => { bm.rotation.z = Math.sin(t * 1.2) * .06; }); } },
+  { n: 4, short: '兩直線交點', build: k => { const { g, box, ball, PAL } = k;
+    for (const x of [-.8, .8]) g.add(box(.08, .3, .08, PAL.woodD, x, 0, 0));
+    g.add(box(1.9, 1.6, .06, PAL.white, 0, .3, -.1));
+    const l1 = box(2, .07, .05, PAL.blue, 0, 0, 0); l1.position.set(0, 1.1, -.05); l1.rotation.z = .5; g.add(l1);
+    const l2 = box(2, .07, .05, PAL.red, 0, 0, 0); l2.position.set(0, 1.1, -.04); l2.rotation.z = -.35; g.add(l2);
+    g.add(ball(.1, PAL.yellow, 0, 1.1, 0, 1)); } },
+  { n: 5, short: '坐標平面', build: k => { const { g, box, cyl, ball, PAL } = k;
+    g.add(box(2.2, .06, 2.2, PAL.white, 0, 0, 0));
+    for (let i = -4; i <= 4; i++) { g.add(box(2.2, .01, .015, PAL.gray, 0, .06, i * .25)); g.add(box(.015, .01, 2.2, PAL.gray, i * .25, .06, 0)); }
+    g.add(box(2.3, .03, .05, PAL.dark, 0, .07, 0)); g.add(box(.05, .03, 2.3, PAL.dark, 0, .07, 0));
+    g.add(cyl(.02, .02, .8, PAL.dark, .5, .06, -.5, 4)); g.add(box(.32, .18, .02, PAL.red, .67, .68, -.5)); g.add(ball(.08, PAL.red, .5, .1, -.5, 1)); } },
+  { n: 6, short: '齒輪（比例）', build: k => { const { g, box, cyl, THREE, PAL, A } = k;
+    g.add(box(2, .15, .5, PAL.stoneD, 0, 0, 0)); g.add(box(.12, 1, .12, PAL.dark, -.35, .15, -.15)); g.add(box(.12, .9, .12, PAL.dark, .67, .15, -.15));
+    const gear = (r, n, c, x) => { const G = new THREE.Group(); G.position.set(x, 1.15, 0); G.rotation.x = Math.PI / 2; G.add(cyl(r, r, .2, c, 0, -.1, 0, 20));
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, t = box(.14, .2, .14, c, Math.cos(a) * (r + .06), -.1, Math.sin(a) * (r + .06)); t.rotation.y = -a; G.add(t); } g.add(G); return G; };
+    const g1 = gear(.6, 12, PAL.blue, -.35), g2 = gear(.3, 6, PAL.yellow, .67); g2.position.y = 1.05;
+    A(t => { g1.rotation.y = t * .8; g2.rotation.y = -t * 1.6; }); } },
+  { n: 7, short: '不等號', build: k => { const { g, box, cyl, PAL } = k;
+    g.add(cyl(.5, .55, .2, PAL.stoneD, 0, 0, 0, 12));
+    const a = box(.9, .2, .2, PAL.red, 0, 0, 0); a.position.set(0, 1.5, 0); a.rotation.z = -.42; g.add(a);
+    const b = box(.9, .2, .2, PAL.red, 0, 0, 0); b.position.set(0, 1.12, 0); b.rotation.z = .42; g.add(b);
+    g.add(cyl(.05, .05, .75, PAL.dark, -.35, .2, 0, 6)); } },
+  { n: 8, short: '積木三視圖', build: k => { const { g, box, PAL, THREE, M } = k;
+    for (const [x, y, z, c] of [[-.35, 0, 0, PAL.blue], [0, 0, 0, PAL.blue], [.35, 0, 0, PAL.blue], [-.35, 0, .35, PAL.yellow], [-.35, .35, 0, PAL.red], [0, .35, 0, PAL.red]]) g.add(box(.33, .33, .33, c, x, y, z));
+    const mir = new THREE.Mesh(new THREE.BoxGeometry(.03, 1.3, 1.3), new THREE.MeshStandardMaterial({ color: '#d8eef6', transparent: true, opacity: .45, roughness: .15 })); mir.position.set(.8, .65, .15); g.add(mir); } },
+  { n: 9, short: '長條圖', build: k => { const { g, box, PAL } = k;
+    g.add(box(2, .08, .8, PAL.white, 0, 0, 0)); g.add(box(.06, 1.6, .06, PAL.dark, -.95, .08, -.35)); g.add(box(1.95, .06, .06, PAL.dark, 0, .08, -.35));
+    [.6, 1.2, .9, 1.45, .4].forEach((h, i) => g.add(box(.26, h, .4, [PAL.blue, PAL.red, PAL.yellow, PAL.leaf, PAL.pink][i], -.6 + i * .32, .08, 0))); } },
+  { n: 10, short: '(a＋b)² 方塊', build: k => { const { g, box, PAL } = k;
+    g.add(box(1.1, .35, 1.1, PAL.blue, -.3, 0, -.3)); g.add(box(.6, .2, .6, PAL.red, .58, 0, .58));
+    g.add(box(.6, .27, 1.1, PAL.yellow, .58, 0, -.3)); g.add(box(1.1, .27, .6, PAL.yellow, -.3, 0, .58)); } },
+  { n: 11, short: '畢氏定理', build: k => { const { g, box, PAL } = k;
+    g.add(box(1.6, .2, .6, PAL.stoneD, 0, 0, .2)); g.add(extrude(k, [[0, 0], [1.2, 0], [0, .9]], .2, PAL.yellow, -.6, .2, .3));
+    for (const x of [-.75, .75]) g.add(box(.07, 1.7, .07, PAL.woodD, x, 0, -.35)); const s = signFace(k, 'a²＋b²＝c²', 1.6, .55, '#a8326e', 46); s.position.set(0, 1.6, -.33); g.add(s); } },
+  { n: 12, short: '代數磚', build: k => { const { g, box, PAL } = k;
+    g.add(box(1, .16, 1, PAL.blue, -.45, 0, -.2));
+    for (let i = 0; i < 2; i++) g.add(box(.25, .16, 1, PAL.leaf, .2 + i * .27, 0, -.2));
+    g.add(box(1, .16, .25, PAL.leaf, -.45, 0, .45));
+    for (let i = 0; i < 2; i++) g.add(box(.25, .16, .25, PAL.yellow, .2 + i * .27, 0, .45)); } },
+  { n: 13, short: '等差階梯', build: k => { const { g, box, PAL } = k;
+    for (let i = 0; i < 5; i++) for (let j = 0; j <= i; j++) g.add(box(.36, .3, .6, i % 2 ? PAL.blue : PAL.red, -.8 + i * .4, j * .3, 0)); } },
+  { n: 14, short: '函數圖形板', build: k => { const { g, box, ball, PAL, A } = k;
+    for (const x of [-.8, .8]) g.add(box(.08, .3, .08, PAL.woodD, x, 0, 0));
+    g.add(box(1.9, 1.5, .06, PAL.white, 0, .3, -.1));
+    for (let i = 0; i < 6; i++) { g.add(box(1.8, .01, .02, PAL.gray, 0, .4 + i * .26, -.06)); g.add(box(.01, 1.4, .02, PAL.gray, -.85 + i * .34, .35, -.06)); }
+    const ln = box(1.9, .06, .05, PAL.blue, 0, 0, 0); ln.position.set(0, 1.05, -.03); ln.rotation.z = .55; g.add(ln);
+    const p = ball(.09, PAL.red, 0, 1.05, 0, 1); g.add(p); A(t => { const x = Math.sin(t * .9) * .7; p.position.set(x, 1.05 + x * Math.tan(.55), 0); }); } },
+  { n: 15, short: '圓規與三角形', build: k => { const { g, box, cyl, ball, THREE, PAL, A } = k;
+    const tr = extrude(k, [[-.8, 0], [.8, 0], [.1, 1.1]], .1, PAL.yellow, 0, 0, 0); tr.rotation.x = -Math.PI / 2; tr.position.set(0, .05, .55); g.add(tr);
+    const cp = new THREE.Group(); cp.position.set(0, 1.6, -.1); g.add(cp); cp.add(ball(.08, PAL.dark, 0, 0, 0, 1)); cp.add(cyl(.03, .03, .25, PAL.dark, 0, 0, 0, 6));
+    const legs = [-1, 1].map(s => { const l = box(.05, 1.5, .05, s < 0 ? '#9aa3ac' : PAL.red, 0, -1.5, 0); const p = new THREE.Group(); p.add(l); cp.add(p); return [p, s]; });
+    A(t => { const a = .3 + Math.sin(t) * .08; legs.forEach(([p, s]) => { p.rotation.z = s * a; }); cp.rotation.y = t * .5; }); } },
+  { n: 16, short: '平行四邊形', build: k => { const { g, box, PAL } = k;
+    for (const z of [-.6, .6]) g.add(box(2.4, .08, .08, PAL.dark, 0, 0, z));
+    const pg = extrude(k, [[-1, 0], [.4, 0], [1, 1], [-.4, 1]], .25, PAL.blue, 0, 0, 0); pg.rotation.x = -Math.PI / 2; pg.position.set(0, .2, .5); g.add(pg); } },
+  { n: 17, short: '相似三角形', build: k => { const { g, box, PAL } = k;
+    g.add(box(2.4, .12, .5, PAL.stoneD, 0, 0, 0));
+    [[.45, -.85, PAL.red], [.75, -.2, PAL.yellow], [1.05, .65, PAL.blue]].forEach(([s, x, c]) => g.add(extrude(k, [[0, 0], [s, 0], [0, s * 1.3]], .15, c, x - s / 2, .12, 0))); } },
+  { n: 18, short: '圓與扇形', build: k => { const { g, box, cyl, mesh, THREE, PAL, A } = k;
+    g.add(box(1.2, .12, .5, PAL.stoneD, 0, 0, 0)); for (const x of [-.35, .35]) { const l = box(.07, 1.3, .07, PAL.dark, 0, 0, 0); l.position.set(x * .6, .75, 0); l.rotation.z = -x * .7; g.add(l); }
+    const w = new THREE.Group(); w.position.set(0, 1.35, .1); g.add(w); w.add(mesh(new THREE.TorusGeometry(.85, .05, 6, 36), PAL.dark, 0, 0, 0));
+    for (let i = 0; i < 8; i++) { const s = box(.03, .85, .03, '#9aa3ac', 0, 0, 0); s.geometry.translate(0, .425, 0); s.rotation.z = i / 8 * Math.PI * 2; w.add(s); }
+    const sec = mesh(new THREE.CircleGeometry(.83, 16, 0, Math.PI / 4), PAL.red, 0, 0, .02); w.add(sec);
+    A(t => { w.rotation.z = t * .4; }); } },
+  { n: 19, short: '三角形的內心', build: k => { const { g, box, ball, mesh, THREE, PAL } = k;
+    g.add(box(1.9, .3, .4, PAL.stoneD, 0, 0, 0));
+    const bar = (cx, cy, rz) => { const b = box(1.6, .07, .07, '#a8326e', 0, 0, 0); b.position.set(cx, cy, 0); b.rotation.z = rz; g.add(b); };
+    bar(0, .33, 0); bar(-.4, 1.023, 1.047); bar(.4, 1.023, -1.047);
+    g.add(mesh(new THREE.TorusGeometry(.43, .03, 6, 36), PAL.blue, 0, .792, 0)); g.add(ball(.07, PAL.red, 0, .792, 0, 1)); } },
+  { n: 20, short: '拋物線噴泉', build: k => { const { g, cyl, ball, PAL, A } = k;
+    g.add(cyl(1, 1.05, .25, PAL.stoneD, 0, 0, 0, 20)); g.add(cyl(.9, .9, .12, '#9fd8e6', 0, .14, 0, 20)); g.add(cyl(.12, .14, .5, PAL.stone, 0, .2, 0, 10));
+    for (let i = 0; i <= 16; i++) { const x = -.8 + i * .1; g.add(ball(.045, '#5b8fd1', x, 2 - 2.4 * x * x, 0, 0)); }
+    const d = ball(.08, '#9fd8e6', 0, 0, 0, 1); g.add(d); A(t => { const x = ((t * .4) % 1) * 1.6 - .8; d.position.set(x, 2 - 2.4 * x * x, 0); }); } },
+  { n: 21, short: '骰子（機率）', build: k => { const { g, box, ball, THREE, PAL, A } = k;
+    const dice = (x, z, s) => { const D = new THREE.Group(); D.position.set(x, s / 2 + .02, z); g.add(D); D.add(box(s, s, s, PAL.white, 0, -s / 2, 0)); const h = s / 2 + .005, r = s * .09;
+      D.add(ball(r, PAL.red, 0, h, 0, 0)); for (const o of [-1, 1]) D.add(ball(r, PAL.dark, o * s * .25, o * s * .25, h, 0)); for (const o of [-1, 0, 1]) D.add(ball(r, PAL.dark, h, o * s * .25, o * s * .25, 0)); return D; };
+    const d1 = dice(-.45, 0, .75); dice(.55, .3, .55).rotation.y = .6; A(t => { d1.rotation.y = t * .6; }); } },
+  { n: 22, short: '柱體與錐體', build: k => { const { g, box, cyl, cone, PAL } = k;
+    g.add(box(2.3, .1, .9, PAL.stone, 0, 0, 0));
+    g.add(cyl(.35, .35, 1.1, PAL.blue, -.75, .1, 0, 16)); g.add(cone(.42, 1.3, PAL.red, 0, .1, 0, 16));
+    const py = cone(.45, 1.1, PAL.yellow, .78, .1, 0, 4); py.rotation.y = Math.PI / 4; g.add(py); } },
+];

@@ -16,6 +16,7 @@
 [data-subject="chinese"]{--accent:#a8453a;--accent-soft:#f6e1dc}
 [data-subject="geography"]{--accent:#b8701f;--accent-soft:#f7e8d2}
 [data-subject="physchem"]{--accent:#6a4fb0;--accent-soft:#ebe4f7}
+[data-subject="math"]{--accent:#a8326e;--accent-soft:#f6e0ea}
 [data-subject="soon"]{--accent:#8b8f94;--accent-soft:#ecebe6}
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -30,6 +31,7 @@
   :root:not([data-theme="light"]) [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
   :root:not([data-theme="light"]) [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
   :root:not([data-theme="light"]) [data-subject="physchem"]{--accent:#b29cf0;--accent-soft:#2b2440}
+  :root:not([data-theme="light"]) [data-subject="math"]{--accent:#f08fbf;--accent-soft:#3a2030}
   :root:not([data-theme="light"]) [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 }
 :root[data-theme="dark"]{
@@ -44,6 +46,7 @@
 :root[data-theme="dark"] [data-subject="chinese"]{--accent:#ec8f80;--accent-soft:#3d2420}
 :root[data-theme="dark"] [data-subject="geography"]{--accent:#eab06a;--accent-soft:#3a2a17}
 :root[data-theme="dark"] [data-subject="physchem"]{--accent:#b29cf0;--accent-soft:#2b2440}
+:root[data-theme="dark"] [data-subject="math"]{--accent:#f08fbf;--accent-soft:#3a2030}
 :root[data-theme="dark"] [data-subject="soon"]{--accent:#7d848b;--accent-soft:#252b31}
 
 *{box-sizing:border-box}
@@ -364,3 +367,17 @@ table.vt td.z.show>*{color:inherit;background:none}
 .vrule li{margin:5px 0}
 .fml .vf{color:var(--accent);font-weight:700}
 @media (max-width:560px){.vrow{grid-template-columns:1fr;gap:8px;padding:10px}.vq{justify-self:start;padding:2px 14px;font-size:15px;border-radius:999px}.vc{min-width:70px;padding:6px 8px}.vc .vs{font-size:18px}}
+
+/* 數學：代表例題（解法預設摺起，先想再看） */
+.exs{display:grid;gap:14px}
+.exq{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow)}
+.exq .fh{font-size:12px;color:var(--muted)}
+.exq .q{margin:4px 0 8px;line-height:1.75;white-space:pre-line}
+.exq summary{cursor:pointer;color:var(--accent);font-weight:700;padding:4px 0}
+.exq dl{margin:8px 0 0;display:grid;grid-template-columns:5.5em 1fr;gap:6px 12px;font-size:15px}
+.exq dt{color:var(--muted);font-size:13.5px;padding-top:2px}
+.exq dd{margin:0;white-space:pre-line}
+.exq dd.ans{font-weight:700}
+.exq dd.pit{color:var(--accent);font-weight:500}
+@media (max-width:560px){.exq dl{grid-template-columns:1fr}.exq dt{padding-top:6px}}
+@media print{.exq{box-shadow:none;break-inside:avoid}}
