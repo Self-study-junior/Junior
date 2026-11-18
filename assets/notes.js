@@ -24,6 +24,24 @@
     + (X ? `<h2>總整理</h2><a class="ulink" href="#${X.key}" data-u="${X.key}"><span class="n">${X.mark}</span><span>${esc(X.side)}</span></a>` : '');
   pick.innerHTML = `<select aria-label="選擇單元">${parts.map(p => `<optgroup label="${esc(p)}">${D.filter(u => u.part === p)
     .map(u => `<option value="${u.unit}">單元 ${u.unit}　${esc(u.title)}</option>`).join('')}</optgroup>`).join('')}${X ? `<optgroup label="總整理"><option value="${X.key}">${esc(X.title)}</option></optgroup>` : ''}</select>`;
+  // 圖解目錄（2026-11-18）：有附圖的科目在側欄多一個「圖解目錄」，列出全部附圖，點了跳到那一節
+  const FIGL = [];
+  D.forEach(u => u.sections.forEach((s, k) => { if (s.fig) FIGL.push({ u, k: k + 1, f: s.fig }); }));
+  if (FIGL.length) side.insertAdjacentHTML('beforeend', `<h2>圖解</h2><a class="ulink" href="#figs" data-u="figs"><span class="n">圖</span><span>圖解目錄</span></a>`);
+  function routeFigs() {
+    if (shown !== 'figs' || lastQ) {
+      view.innerHTML = `<header class="uhead"><span class="part">圖解</span><h1>圖解目錄</h1>
+        <p class="sum">全部 ${FIGL.length} 張附圖，依單元排列。點圖會跳到那一節。</p></header>`
+        + D.map(u => [u, FIGL.filter(x => x.u === u)]).filter(x => x[1].length).map(([u, xs]) =>
+          `<h2 class="blk-h">單元 ${u.unit}　${esc(u.title)}</h2><div class="figidx">${xs.map(x =>
+            `<a class="figcard" href="#u${u.unit}/s${x.k}"><img src="${esc(x.f.src)}" alt="" loading="lazy"><span>${esc(x.f.cap)}</span></a>`).join('')}</div>`).join('');
+      shown = 'figs';
+      side.querySelectorAll('.ulink').forEach(a => a.toggleAttribute('aria-current', a.dataset.u === 'figs'));
+      if (lastQ) { lastQ = ''; fin.value = ''; }
+      window.scrollTo(0, 0);
+    }
+    store.set('unit.' + ID, 'figs');
+  }
   pick.querySelector('select').onchange = e => { location.hash = X && e.target.value === X.key ? X.key : 'u' + e.target.value; };
 
   // ---------- 單元內容 ----------
@@ -108,6 +126,7 @@
   // ---------- 路由：#u3、#u3/s2、#u3/terms ----------
   let shown = null;
   function route() {
+    if (FIGL.length && (location.hash === '#figs' || (!location.hash && store.get('unit.' + ID) === 'figs'))) return routeFigs();
     if (X && location.hash.slice(1).split('/')[0] === X.key) return routeChrono();
     const m = location.hash.match(/^#u(\d+)(?:\/(\w+))?/);
     const saved = store.get('unit.' + ID, D[0].unit);

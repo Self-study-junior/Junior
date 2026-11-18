@@ -7,7 +7,9 @@ export function applyFigures(root, id, units) {
   for (const u of units) u.sections.forEach((s, i) => {
     const k = `u${u.unit}-s${i + 1}`;
     delete s.fig;
-    if (idx[k]) s.fig = { src: `../assets/fig/${id}/${k}.svg`, cap: idx[k] };
+    // 2026-11-18：有 Gemini 插畫版（.webp）就用它，沒有才用 SVG
+    const ext = fs.existsSync(path.join(root, 'assets/fig', id, k + '.webp')) ? 'webp' : 'svg';
+    if (idx[k]) s.fig = { src: `../assets/fig/${id}/${k}.${ext}`, cap: idx[k] };
   });
   return units;
 }
