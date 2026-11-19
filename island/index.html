@@ -18,16 +18,23 @@ canvas#sea{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-a
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .card{background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:18px;box-shadow:var(--shadow)}
-.pill{border:0;background:var(--card);backdrop-filter:blur(10px);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;cursor:pointer;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);white-space:nowrap}
+.pill{border:0;background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;cursor:pointer;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);white-space:nowrap;transition:background .2s,color .2s,transform .15s}
 .pill:hover{background:#fff}
 .pill.dark{background:var(--ink);color:#fff}
-/* 左上品牌 */
+/* 左上品牌與探索進度 */
 #brand{position:fixed;left:20px;top:20px;padding:14px 18px;display:flex;gap:14px;align-items:center;z-index:5;text-decoration:none;color:inherit}
 #brand .big{font-weight:900;font-size:30px;line-height:.95;color:var(--accent);letter-spacing:-.01em}
 #brand .sm{font-weight:900;font-size:17px;line-height:1.35}
 #brand .sm b{color:var(--accent)}
-/* 上方工具列 */
-#tools{position:fixed;top:24px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
+#progBadge{position:fixed;left:20px;top:106px;z-index:5;padding:7px 14px;font-size:13px;font-weight:700;color:var(--ink);border:1px solid rgba(255,255,255,.7)}
+#progBadge b{color:var(--accent);font-weight:900}
+/* 上方工具列與雙段式模式切換 */
+#tools{position:fixed;top:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:5;max-width:calc(100vw - 24px)}
+.seg-wrap{display:inline-flex;align-items:center;padding:3px;border-radius:999px;background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--shadow);gap:2px}
+.seg-wrap .seg{border:0;background:transparent;border-radius:999px;padding:6px 13px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
+.seg-wrap .seg:hover{color:var(--ink)}
+.seg-wrap .seg.on{background:var(--ink);color:#fff;box-shadow:0 3px 10px -2px rgba(42,38,34,.45)}
+.seg-wrap .seg-div{width:1px;height:16px;background:var(--line);flex-shrink:0}
 /* 島的標籤 */
 #labels{position:fixed;inset:0;pointer-events:none;z-index:3}
 .lb{position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;background:#fff;border-radius:999px;padding:5px 12px 5px 8px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 4px 14px -4px rgba(0,0,0,.35);display:flex;align-items:center;gap:6px;transition:opacity .2s,background .2s;border:0}
@@ -52,7 +59,7 @@ button{font:inherit;color:inherit}
 .li .t{font-size:12px;color:var(--muted)}
 .li.soon b{color:var(--muted)}
 /* 島的詳細卡片 */
-#info{position:fixed;left:20px;bottom:20px;width:min(380px,calc(100vw - 40px));max-height:calc(100vh - 140px);overflow:auto;padding:20px 20px 16px;z-index:7}
+#info{position:fixed;left:20px;bottom:20px;width:min(380px,calc(100vw - 40px));max-height:calc(100vh - 150px);overflow:auto;padding:20px 20px 16px;z-index:7}
 #info .k{font-size:11px;letter-spacing:.18em;color:var(--c);font-weight:700}
 #info h3{margin:4px 0 2px;font-size:26px;font-weight:900}
 #info .en{color:var(--muted);font-size:13px}
@@ -92,17 +99,29 @@ button{font:inherit;color:inherit}
 #tour .row{display:flex;justify-content:space-between}
 #tour .row button{border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:500;border:1px solid var(--line);background:#fff}
 #tour .row button.next{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 0 0 3px #fffaf5,0 0 0 5px var(--accent)}
-#loading{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:#7cc7d3;color:#fff;font-weight:700;font-size:16px;transition:opacity .6s}
+/* 載入畫面 */
+#loading{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:linear-gradient(165deg,#7cc6ea 0%,#9fd8e6 55%,#f7ead0 100%);color:var(--ink);transition:opacity .65s ease}
 #loading.done{opacity:0;pointer-events:none}
-#hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:4;font-size:13px;padding:7px 14px;color:var(--muted)}
+.ld-box{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;animation:ldFadeUp .85s cubic-bezier(.22,1,.36,1) both}
+.ld-en{font-weight:900;font-size:clamp(32px,6vw,46px);line-height:.95;letter-spacing:.06em;color:var(--accent);text-shadow:0 6px 20px rgba(226,103,60,.22)}
+.ld-sub{margin-top:12px;font-weight:700;font-size:15.5px;letter-spacing:.12em;color:var(--ink)}
+.ld-track{margin-top:18px;width:190px;height:6px;border-radius:999px;background:rgba(255,255,255,.55);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+.ld-bar{width:42%;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#f4c95d);animation:ldSlide 1.35s ease-in-out infinite}
+@keyframes ldFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ldSlide{0%{transform:translateX(-110%)}50%{transform:translateX(140%)}100%{transform:translateX(-110%)}}
+/* 操作提示與淡出 */
+#hint,#wHelp{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:4;font-size:13px;padding:7px 14px;color:var(--muted);transition:opacity .8s ease;max-width:calc(100vw - 32px);text-align:center}
+#hint.fade,#wHelp.fade{opacity:0;pointer-events:none}
+/* 專注賞景模式 */
+body.zen #brand,body.zen #progBadge,body.zen #tools,body.zen #labels,body.zen #list,body.zen #info,body.zen #hint,body.zen #wHelp,body.zen #joy,body.zen #walkHud,body.zen #near,body.zen #tip{display:none!important}
+#bShowUi{position:fixed;right:20px;bottom:20px;z-index:15;font-weight:700}
 /* 島民模式 */
-body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,body.walking #bWalk{display:none!important}
-#walkHud{position:fixed;left:20px;top:122px;z-index:6;display:flex;gap:8px;flex-wrap:wrap}
+body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,body.walking #progBadge,body.walking #bHide{display:none!important}
+#walkHud{position:fixed;left:20px;top:114px;z-index:6;display:flex;gap:8px;flex-wrap:wrap}
 #joy{position:fixed;left:28px;bottom:28px;width:136px;height:136px;border-radius:50%;z-index:6;background:rgba(255,250,245,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:var(--shadow),inset 0 0 0 3px rgba(255,255,255,.8);touch-action:none;cursor:grab}
 #joy::before{content:"";position:absolute;inset:30%;border-radius:50%;border:2px dashed rgba(42,38,34,.18)}
 #joy i{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb08f,var(--accent));box-shadow:0 6px 14px -4px rgba(140,50,20,.6),inset 0 -3px 0 rgba(0,0,0,.12);transition:transform .08s}
 #joy.on{cursor:grabbing}
-#wHelp{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:4;font-size:13px;padding:7px 14px;color:var(--muted)}
 #near{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:7;width:min(400px,calc(100vw - 220px));padding:14px 16px;border-left:5px solid var(--c)}
 #near .k{font-size:11px;letter-spacing:.14em;color:var(--c);font-weight:700}
 #near b{display:block;font-size:18px;font-weight:900;margin:2px 0}
@@ -127,7 +146,17 @@ body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,bo
 #maker .btns{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
 #maker .btns button{border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:700;border:1px solid var(--line);background:#fff}
 #maker .btns .go{background:var(--accent);color:#fff;border-color:var(--accent);flex:1}
+#nogl{position:fixed;inset:0;z-index:40;background:var(--paper);padding:24px;overflow:auto}
+#nogl a{display:block;margin:8px 0;font-size:18px;color:var(--ink)}
 @media (max-width:760px){
+  #brand{left:12px;top:12px;padding:10px 12px;gap:10px}
+  #brand .big{font-size:20px}
+  #brand .sm{font-size:13px}
+  #progBadge{left:12px;top:74px;padding:5px 11px;font-size:12px}
+  #tools{top:auto;bottom:16px;left:12px;right:12px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px}
+  #tools .pill{padding:7px 10px;font-size:12.5px}
+  .seg-wrap .seg{padding:6px 10px;font-size:14px}
+  .seg-wrap .seg .lbl,#bHide .lbl{display:none}
   #walkHud{top:auto;bottom:16px;right:12px;left:auto;flex-direction:column;align-items:flex-end}
   body.walking #tools{display:none}
   #joy{left:18px;bottom:22px;width:124px;height:124px}
@@ -135,15 +164,6 @@ body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,bo
   #near{left:12px;right:12px;width:auto;transform:none;bottom:auto;top:92px}
   #maker .mk{grid-template-columns:1fr}
   #mkPrev{margin:0 auto;display:block}
-}
-#nogl{position:fixed;inset:0;z-index:40;background:var(--paper);padding:24px;overflow:auto}
-#nogl a{display:block;margin:8px 0;font-size:18px;color:var(--ink)}
-@media (max-width:760px){
-  #brand{left:12px;top:12px;padding:10px 12px;gap:10px}
-  #brand .big{font-size:20px}
-  #brand .sm{font-size:13px}
-  #tools{top:auto;bottom:16px;left:12px;transform:none}
-  #tools .pill{padding:8px 11px;font-size:13px}
   #list{width:100%;top:auto;height:62vh;border-radius:24px 24px 0 0}
   #list.closed{transform:translateY(105%)}
   #info{left:12px;right:12px;bottom:12px;width:auto;max-height:46vh;padding:16px 16px 12px}
@@ -153,6 +173,7 @@ body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,bo
   #info .stats{margin:6px 0 8px}
   #info .units button{padding:4px 6px}
   #hint{display:none}
+  #bShowUi{right:12px;bottom:16px}
   .lb{font-size:12px;padding:4px 10px 4px 7px}
 }
 </style>
@@ -168,17 +189,26 @@ body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,bo
   <span class="big">STUDY<br>ISLAND.</span>
   <span class="sm">國中自學筆記<br><b>學習</b>島</span>
 </a>
+<button id="progBadge" class="pill" type="button" title="查看所有科目探索進度">🚩 已探索 <b>0</b> / 0</button>
 <nav id="tools">
-  <button class="pill dark" id="bWalk">🧍 化身島民</button>
-  <button class="pill" id="bHome">⌂ 全景</button>
-  <button class="pill" id="bList">☰ 清單</button>
-  <button class="pill" id="bTour" aria-label="導覽說明">?</button>
+  <div id="modeSwitch" class="seg-wrap" role="group" aria-label="瀏覽模式">
+    <button type="button" class="seg on" id="bView" title="俯瞰全島">🏝️<span class="lbl"> 俯瞰全島</span></button>
+    <span class="seg-div" aria-hidden="true"></span>
+    <button type="button" class="seg" id="bWalk" title="登島漫步">🚶<span class="lbl"> 登島漫步</span></button>
+  </div>
+  <button class="pill" id="bSky" type="button" title="切換天色">白天 ☀️</button>
+  <button class="pill" id="bHome" type="button">⌂ 全景</button>
+  <button class="pill" id="bList" type="button">☰ 清單</button>
+  <button class="pill" id="bHide" type="button" title="隱藏介面">👁️<span class="lbl"> 隱藏介面</span></button>
+  <button class="pill" id="bTour" type="button" aria-label="導覽說明">?</button>
   <a class="pill" href="../">一般版</a>
 </nav>
+<button class="pill" id="bShowUi" type="button" hidden>👁️ 顯示介面</button>
 <!-- 島民模式 -->
 <div id="walkHud" hidden>
-  <button class="pill" id="wExit">✕ 離開島民模式</button>
-  <button class="pill" id="wSkin">🎨 換造型</button>
+  <button class="pill" id="wExit" type="button">✕ 離開島民模式</button>
+  <button class="pill" id="wSkin" type="button">🎨 換造型</button>
+  <button class="pill" id="wHide" type="button">👁️ 隱藏介面</button>
 </div>
 <div id="joy" hidden aria-label="移動搖桿"><i></i></div>
 <div id="wHelp" class="card" hidden>拖曳左下圓點走路 · 拖曳畫面轉視角 · 也可用 WASD／方向鍵 · 點物件會自動走過去</div>
@@ -221,7 +251,13 @@ body.walking #list,body.walking #hint,body.walking #bList,body.walking #bHome,bo
     <div class="row"><button id="tSkip">略過</button><button class="next" id="tNext">下一步 →</button></div>
   </div>
 </div>
-<div id="loading">學習島正在浮出海面…</div>
+<div id="loading">
+  <div class="ld-box">
+    <div class="ld-en">STUDY ISLAND</div>
+    <div class="ld-sub">學習島正在浮出海面…</div>
+    <div class="ld-track" aria-hidden="true"><div class="ld-bar"></div></div>
+  </div>
+</div>
 <div id="nogl" hidden></div>
 
 <script type="module" src="../assets/island.js"></script>

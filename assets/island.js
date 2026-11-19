@@ -45,17 +45,50 @@ renderer.shadowMap.enabled = !touch;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
 const scene = new THREE.Scene();
-scene.background = (() => {   // 天空：上藍下暖的漸層
-  const c = document.createElement('canvas'); c.width = 4; c.height = 512; const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 512);
-  gr.addColorStop(0, '#7cc6ea'); gr.addColorStop(.45, '#c4eaf3'); gr.addColorStop(.75, '#fdf0dc'); gr.addColorStop(1, '#fde3c8'); g.fillStyle = gr; g.fillRect(0, 0, 4, 512);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+
+function makeSkyTex(stops) {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 512;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 512);
+  stops.forEach(([p, col]) => gr.addColorStop(p, col));
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const SKY_PRESETS = {
+  day: {
+    label: '白天 ☀️',
+    tex: makeSkyTex([[0, '#7cc6ea'], [.45, '#c4eaf3'], [.75, '#fdf0dc'], [1, '#fde3c8']]),
+    fog: '#d8f0f1',
+    hemiSky: '#fff6ea', hemiGround: '#8fc7c9', hemiInt: 1.25,
+    sunColor: '#ffedd2', sunInt: 2.25, sunPos: [-70, 120, 60],
+    exposure: 1.08, stars: false,
+  },
+  dusk: {
+    label: '黃昏 🌅',
+    tex: makeSkyTex([[0, '#3e5c8e'], [.42, '#a36f96'], [.74, '#f39b7e'], [1, '#ffd59e']]),
+    fog: '#f0be9e',
+    hemiSky: '#ffd3b5', hemiGround: '#6f81a6', hemiInt: 1.15,
+    sunColor: '#ff9d5c', sunInt: 2.4, sunPos: [-115, 50, 75],
+    exposure: 1.06, stars: false,
+  },
+  night: {
+    label: '星空 🌙',
+    tex: makeSkyTex([[0, '#0b1528'], [.45, '#16294a'], [.78, '#243f68'], [1, '#34547d']]),
+    fog: '#1b3152',
+    hemiSky: '#85aae6', hemiGround: '#2e4e68', hemiInt: 1.05,
+    sunColor: '#cfe2ff', sunInt: 1.35, sunPos: [60, 110, -50],
+    exposure: 1.05, stars: true,
+  },
+};
+scene.background = SKY_PRESETS.day.tex;
 scene.fog = new THREE.Fog('#d8f0f1', 240, 520);
 const camera = new THREE.PerspectiveCamera(34, 1, .5, 1000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = .08;
 controls.minDistance = 9; controls.maxDistance = 280; controls.maxPolarAngle = 1.22; controls.minPolarAngle = .35;
 controls.screenSpacePanning = false; controls.rotateSpeed = .6; controls.zoomSpeed = .8;
-scene.add(new THREE.HemisphereLight('#fff6ea', '#8fc7c9', 1.25));
+const hemi = new THREE.HemisphereLight('#fff6ea', '#8fc7c9', 1.25);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight('#ffedd2', 2.25);
 sun.position.set(-70, 120, 60); sun.castShadow = true;
 Object.assign(sun.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 340 });
@@ -197,6 +230,48 @@ const LOOKS = {
   hat: ['none', '#f4c95d', '#e2673c', '#1a8a96', '#fffaf2'],
 };
 
+// ---------- 星空粒子 ----------
+const stars = (() => {
+  const count = 480, pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const u = rnd() * Math.PI * 2, v = Math.acos(rnd() * .82 + .18), r = rr(380, 470);
+    pos[i * 3] = Math.sin(v) * Math.cos(u) * r;
+    pos[i * 3 + 1] = Math.cos(v) * r;
+    pos[i * 3 + 2] = Math.sin(v) * Math.sin(u) * r;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: '#fff8dc', size: 2.8, sizeAttenuation: true, transparent: true, opacity: .9, fog: false });
+  const pts = new THREE.Points(geo, mat);
+  pts.visible = false;
+  scene.add(pts);
+  animators.push(t => { if (pts.visible) mat.opacity = .72 + Math.sin(t * 1.8) * .22; });
+  return pts;
+})();
+
+const SKY_ORDER = ['day', 'dusk', 'night'];
+let skyMode = SKY_PRESETS[store.get('island.sky', 'day')] ? store.get('island.sky', 'day') : 'day';
+function applySky(mode, save = true) {
+  const p = SKY_PRESETS[mode] || SKY_PRESETS.day;
+  skyMode = mode;
+  scene.background = p.tex;
+  scene.fog.color.set(p.fog);
+  hemi.color.set(p.hemiSky);
+  hemi.groundColor.set(p.hemiGround);
+  hemi.intensity = p.hemiInt;
+  sun.color.set(p.sunColor);
+  sun.intensity = p.sunInt;
+  sun.position.set(...p.sunPos);
+  renderer.toneMappingExposure = p.exposure;
+  stars.visible = p.stars;
+  if ($('bSky')) $('bSky').textContent = p.label;
+  if (save) store.set('island.sky', mode);
+}
+applySky(skyMode, false);
+$('bSky').onclick = () => {
+  const next = SKY_ORDER[(SKY_ORDER.indexOf(skyMode) + 1) % SKY_ORDER.length];
+  applySky(next);
+};
 
 // ---------- 六角島 ----------
 const R = 12, AP = R * Math.sqrt(3) / 2;   // 外接半徑、邊心距
@@ -330,12 +405,31 @@ function numSprite(text, color) {
 }
 function slotsFor(defs) {
   const big = defs.filter(d => !d.small), small = defs.filter(d => d.small), out = [];
-  const ring = (list, r, off) => list.forEach((d, i) => { const a = off + i / list.length * Math.PI * 2; out.push([d, Math.sin(a) * r, -Math.cos(a) * r]); });
-  if (small.length) { ring(big, 4.7, 0); ring(small, 9, Math.PI / small.length); return out; }
+  // 內圈偏移 30 度，讓地標落在六個角落，不擋住通往六座橋的石板主幹道
+  const ringInner = (list, r) => list.forEach((d, i) => {
+    const a = Math.PI / 6 + i / list.length * Math.PI * 2;
+    out.push([d, Math.sin(a) * r, -Math.cos(a) * r]);
+  });
+  // 外圈依六個扇區分組配置，避開 0°、60°、120°、180°、240°、300° 的橋口走廊
+  const ringOuter = (list, r) => {
+    const buckets = [[], [], [], [], [], []];
+    list.forEach((d, i) => buckets[i % 6].push(d));
+    buckets.forEach((items, k) => {
+      if (!items.length) return;
+      const base = k * Math.PI / 3 + Math.PI / 6;
+      const spread = items.length === 1 ? 0 : items.length === 2 ? .19 : .22;
+      items.forEach((d, j) => {
+        const u = items.length === 1 ? 0 : (j / (items.length - 1) - .5) * 2;
+        const a = base + u * spread;
+        out.push([d, Math.sin(a) * r, -Math.cos(a) * r]);
+      });
+    });
+  };
+  if (small.length) { ringInner(big, 4.5); ringOuter(small, 8.2); return out; }
   const n = defs.length;
-  if (n <= 6) ring(defs, 6.4, 0);
-  else if (n <= 10) { ring(defs.slice(0, 3), 4.1, 0); ring(defs.slice(3), 8.3, Math.PI / (n - 3)); }
-  else { ring(defs.slice(0, 5), 4.5, 0); ring(defs.slice(5), 8.5, Math.PI / (n - 5)); }
+  if (n <= 6) ringInner(defs, 5.7);
+  else if (n <= 10) { ringInner(defs.slice(0, 3), 4.1); ringOuter(defs.slice(3), 8.2); }
+  else { ringInner(defs.slice(0, 5), 4.4); ringOuter(defs.slice(5), 8.25); }
   return out;
 }
 // 讀過的單元會在物件旁插一面小旗子
@@ -368,7 +462,7 @@ function buildSubject(g, id, theme, it) {
   const soft = tint(theme.c, .62), softer = tint(theme.c, .8);
   // 中央廣場、通往六個方向的石板路、環狀步道
   deco.add(cyl(2.25, 2.3, .06, STONE1, 0, 0, 0, 28)); tilesRing(deco, 2.0, 22, soft, softer, .5, .4);
-  const ringR = few ? 0 : 6.7;
+  const ringR = few ? 0 : 6.5;
   if (ringR) tilesRing(deco, ringR, 62, STONE1, STONE2, .6, .5);
   for (let k = 0; k < 6; k++) tilesLine(deco, k * Math.PI / 3, 2.6, AP - .7, STONE1, STONE2);
   // 科目碑：台階＋直書的科目名稱＋屋頂
@@ -386,7 +480,7 @@ function buildSubject(g, id, theme, it) {
   const taken = [];
   for (const [d, x, z] of slots) {
     const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = Math.atan2(x, z); L.add(w);
-    const pr = d.small ? 1.05 : few ? 2.1 : 1.55;
+    const pr = d.small ? 1.05 : few ? 2.0 : 1.48;
     // 底座：石階＋主題色台面
     const ped = new THREE.Group();
     ped.add(cyl(pr + .14, pr + .26, .13, PAL.stone, 0, 0, 0, 20)); ped.add(cyl(pr, pr + .08, .17, soft, 0, .13, 0, 20));
@@ -394,7 +488,7 @@ function buildSubject(g, id, theme, it) {
     const rim = flat(new THREE.RingGeometry(pr - .2, pr - .1, 24), theme.c, .306); ped.add(rim);
     ped.add(cyl(.05, .06, .5, PAL.woodD, 0, .13, pr + .12, 5));
     const plinth = bake(ped); w.add(plinth);
-    const inner = new THREE.Group(); inner.position.y = .3; if (few) inner.scale.setScalar(1.4); w.add(inner);
+    const inner = new THREE.Group(); inner.position.y = .3; if (few) inner.scale.setScalar(1.35); w.add(inner);
     d.build({ ...kit, g: inner });
     const sp = numSprite(d.n ? String(d.n) : d.key === 'chrono' ? '年' : d.key === 'valence' ? '價' : '★', theme.c); sp.position.set(0, .92, pr + .14); w.add(sp);
     const key = d.key || 'u' + d.n;
@@ -555,6 +649,15 @@ for (let i = 0; i < 6; i++) {
   animators.push(t => { const a = off + t * sp; g.position.set(Math.cos(a) * r, h + Math.sin(t + i) * .6, Math.sin(a) * r); g.rotation.y = -a; w1.rotation.z = Math.sin(t * 6 + i) * .5; w2.rotation.z = -w1.rotation.z; });
 }
 
+// ---------- 常駐探索進度 ----------
+function updateProgress() {
+  const all = islands.flatMap(i => i.landmarks);
+  const v = all.filter(seen).length;
+  const el = $('progBadge');
+  if (el) el.innerHTML = `🚩 已探索 <b>${v}</b> / ${all.length}`;
+}
+updateProgress();
+
 // ---------- 標籤 ----------
 const labels = $('labels'), tmp = new THREE.Vector3();
 for (const it of islands) {
@@ -587,6 +690,7 @@ $('listBody').innerHTML = SUBJ.map(s => {
 $('listBody').onclick = e => { const b = e.target.closest('.li'); if (b) { focus(islands.find(i => i.id === b.dataset.id)); if (innerWidth < 760) $('list').classList.add('closed'); } };
 const toggleList = open => $('list').classList.toggle('closed', open === undefined ? undefined : !open);
 $('bList').onclick = () => toggleList(); $('listX').onclick = () => toggleList(false);
+$('progBadge').onclick = () => { if (innerWidth < 760) info.hidden = true; toggleList(true); };
 if (innerWidth < 760) toggleList(false);
 
 // ---------- 島的資訊卡、地標卡 ----------
@@ -610,7 +714,7 @@ function showLandmark(lm) {
   const x = lmInfo(lm);
   info.style.setProperty('--c', lm.it.theme.c); info.hidden = false;
   info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${esc(x.k)}${x.part ? ' · ' + esc(x.part) : ''}</div><h3 class="lmt">${esc(x.t)}</h3>
-    <div class="en">島上的「${esc(lm.def.short)}」${seen(lm) ? '　<span class="done">✓ 已讀過</span>' : '　<span class="new">還沒讀過，去看看！</span>'}</div>
+    <div class="en">島上的「${esc(lm.def.short)}」${seen(lm) ? ' <span class="done">✓ 已讀過</span>' : ' <span class="new">還沒讀過，去看看！</span>'}</div>
     ${x.s ? `<p>${esc(x.s)}</p>` : ''}
     ${x.h.length ? `<div class="chips">${x.h.map(h => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
     <a class="go" href="${x.href}">閱讀這個${lm.it.id === 'english' ? '主題' : lm.def.key === 'chrono' ? '年表' : lm.def.key === 'valence' ? '表' : '單元'} →</a>
@@ -635,7 +739,7 @@ function showInfo(it) {
     info.innerHTML = `<button class="x" aria-label="關閉">✕</button><div class="k">${it.num} · ${esc(s.en.toUpperCase())}</div><h3>${esc(s.name)}島</h3>
       <p>${esc(s.desc || '')}</p>
       <div class="stats">${stats.map(([v, t]) => `<div><b>${(v || 0).toLocaleString()}</b><span>${t}</span></div>`).join('')}</div>
-      ${(() => { const n = it.landmarks.length, v = it.landmarks.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${n ? v / n * 100 : 0}%"></i></div><span>已探索 <b>${v}</b> / ${n}${v === n && n ? '　🏆 全部探索完成！' : ''}</span></div>`; })()}
+      ${(() => { const n = it.landmarks.length, v = it.landmarks.filter(seen).length; return `<div class="prog"><div class="bar"><i style="width:${n ? v / n * 100 : 0}%"></i></div><span>已探索 <b>${v}</b> / ${n}${v === n && n ? ' 🏆 全部探索完成！' : ''}</span></div>`; })()}
       <div class="hint2">島上每個物件代表一個${s.id === 'english' ? '類別' : '單元'}，讀過的會插上 🚩 黃色小旗。點物件或下面的名稱就能前往。</div>
       <div class="units">${it.landmarks.map((lm, i) => { const y = lmInfo(lm); return `<button type="button" data-i="${i}"><i>${lm.def.n && !lm.def.gram ? lm.def.n : lm.def.key === 'chrono' ? '年' : lm.def.key === 'valence' ? '價' : lm.def.gram ? 'G' + lm.def.n : '★'}</i><span>${esc(y.t.replace(/^\d+．/, ''))}<small>${esc(lm.def.short)}</small></span>${seen(lm) ? '<em>✓</em>' : ''}</button>`; }).join('')}</div>
       <a class="go" href="../${s.id}/">走進${esc(s.name)}筆記 →</a>`;
@@ -687,6 +791,25 @@ function focusLm(lm) {
 }
 $('bHome').onclick = () => { select(null); info.hidden = true; flyTo(HOME.target.clone(), HOME.pos.clone()); };
 
+// ---------- 操作提示自動淡出 & 專注賞景 ----------
+const hintTimers = new WeakMap();
+function fadeHintLater(el) {
+  if (!el || el.hidden || el.classList.contains('fade') || hintTimers.has(el)) return;
+  const timer = setTimeout(() => el.classList.add('fade'), 4000);
+  hintTimers.set(el, timer);
+}
+function setZen(on) {
+  document.body.classList.toggle('zen', on);
+  $('bShowUi').hidden = !on;
+  if (on) tip.hidden = true;
+}
+$('bHide').onclick = () => setZen(true);
+$('wHide').onclick = () => setZen(true);
+$('bShowUi').onclick = () => setZen(false);
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.body.classList.contains('zen')) setZen(false);
+});
+
 // ---------- 點擊／滑過 ----------
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const pickables = islands.map(i => i.group);
@@ -697,26 +820,29 @@ function pick(e) {
   return { it: h.object.userData.island, lm: h.object.userData.lm };
 }
 let down = null;
-canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerdown', e => {
+  down = { x: e.clientX, y: e.clientY };
+  fadeHintLater(walk.on ? $('wHelp') : $('hint'));
+});
 canvas.addEventListener('pointerup', e => {
   if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const p = pick(e); if (walk.on) { if (p?.lm) walkTo(p.lm); } else if (p?.lm) focusLm(p.lm); else if (p?.it) focus(p.it); }
   down = null;
 });
 canvas.addEventListener('pointermove', e => {
-  if (touch || e.buttons || walk.on) { tip.hidden = true; return; }
+  if (touch || e.buttons || walk.on || document.body.classList.contains('zen')) { tip.hidden = true; return; }
   const p = pick(e); const it = p?.it || null, lm = p?.lm || null;
   hover = it; hoverLm = lm; canvas.style.cursor = it ? 'pointer' : '';
-  if (lm) { const x = lmInfo(lm); tip.innerHTML = `<b style="color:${lm.it.theme.c}">${esc(lm.it.s.name)}</b>　${esc(x.t)}`; tip.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; tip.hidden = false; }
+  if (lm) { const x = lmInfo(lm); tip.innerHTML = `<b style="color:${lm.it.theme.c}">${esc(lm.it.s.name)}</b> ${esc(x.t)}`; tip.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; tip.hidden = false; }
   else tip.hidden = true;
 });
 canvas.addEventListener('pointerleave', () => { tip.hidden = true; hoverLm = null; hover = null; });
-controls.addEventListener('start', () => { fly = null; });
+controls.addEventListener('start', () => { fly = null; fadeHintLater($('hint')); });
 
 // ---------- 導覽 ----------
 const TOUR = [
   ['每座島是一個科目', '9 座六角形的島，拼成一座學習群島。點一座島，或用右側清單，鏡頭就會飛過去。'],
   ['用木橋把知識連起來', '中央是學習中心，橋把每座島連在一起。拖曳可以轉動視角，滾輪或兩指可以縮放。'],
-  ['化身島民去探險', '按上方「🧍 化身島民」建立自己的角色，用左下角的圓點搖桿在島上走路。走到物件旁邊，就能選擇進入那個單元。'],
+  ['化身島民去探險', '按上方「🚶 登島漫步」建立自己的角色，用左下角的圓點搖桿在島上走路。走到物件旁邊，就能選擇進入那個單元。'],
   ['島上的物件都有意義', '每個物件代表一個單元（英語是一個類別）：例如生物島的 DNA 是「遺傳」、歷史島的火車是「日本帝國時期」。點物件看單元重點，再按按鈕走進筆記。灰色的島還在整理中。'],
 ];
 let tk = 0;
@@ -728,7 +854,7 @@ $('bTour').onclick = () => tour(0);
 
 // ================= 島民模式：化身成島民，用搖桿在島上走 =================
 let look = store.get('islander', null);
-const walk = { on: false, pos: new THREE.Vector3(0, 0, 8), yaw: Math.PI, vy: 0, camYaw: 0, camPitch: .5, camDist: 13, target: null, stuck: 0, near: null, t: 0 };
+const walk = { on: false, pos: new THREE.Vector3(0, 0, 8), yaw: Math.PI, vy: 0, camYaw: 0, camPitch: .5, camDist: 13, path: [], target: null, stuck: 0, near: null, t: 0 };
 let villager = null;
 
 function makeVillager(L, npc) {
@@ -784,11 +910,11 @@ const HEXN = [0, 1, 2].map(k => { const a = k * Math.PI / 3; return [Math.sin(a)
 const inHex = (x, z, c, m) => HEXN.every(([nx, nz]) => Math.abs((x - c.x) * nx + (z - c.z) * nz) <= AP - m);
 const obstacles = [];  // { x, z, r } 或 { box:[x0,z0,x1,z1] }
 for (const it of islands) {
-  for (const lm of it.landmarks) { const p = new THREE.Vector3(); lm.group.getWorldPosition(p); obstacles.push({ x: p.x, z: p.z, r: lm.pr * .92, lm }); lm.wp = p; }
+  for (const lm of it.landmarks) { const p = new THREE.Vector3(); lm.group.getWorldPosition(p); obstacles.push({ x: p.x, z: p.z, r: lm.pr * .9, lm }); lm.wp = p; }
   if (it.landmarks.length) obstacles.push({ x: it.pos.x, z: it.pos.z, r: 1.25 });
 }
 const HUB = islands.find(i => i.id === 'hub');
-if (HUB) { obstacles.push({ x: 0, z: 0, r: 2.5 }); obstacles.push({ box: [-4.2, -8.9, 4.2, -4.5] }); }
+if (HUB) { obstacles.push({ x: 0, z: 0, r: 2.5 }); obstacles.push({ box: [-4.1, -8.2, 4.1, -4.5] }); }
 function groundAt(x, z) {   // 回傳地面高度；不能走回傳 null
   for (const it of islands) if (inHex(x, z, it.pos, .7)) return it.group.position.y + it.group.userData.top;
   for (const [a, b] of BRIDGES) {
@@ -815,7 +941,7 @@ function moveStick(e) {
   let dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2); const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
   stick.x = dx; stick.y = dy; knob.style.transform = `translate(${dx * 40}px,${dy * 40}px)`;
 }
-joy.addEventListener('pointerdown', e => { stick.id = e.pointerId; joy.setPointerCapture(e.pointerId); joy.classList.add('on'); walk.target = null; moveStick(e); e.preventDefault(); });
+joy.addEventListener('pointerdown', e => { stick.id = e.pointerId; joy.setPointerCapture(e.pointerId); joy.classList.add('on'); walk.target = null; walk.path = []; moveStick(e); fadeHintLater($('wHelp')); e.preventDefault(); });
 joy.addEventListener('pointermove', e => { if (stick.id === e.pointerId) moveStick(e); });
 const stickEnd = () => { stick.id = null; stick.x = stick.y = 0; knob.style.transform = ''; joy.classList.remove('on'); };
 joy.addEventListener('pointerup', stickEnd); joy.addEventListener('pointercancel', stickEnd);
@@ -823,6 +949,7 @@ const keys = new Set();
 addEventListener('keydown', e => {
   if (!walk.on || e.target.tagName === 'INPUT') return;
   keys.add(e.code);
+  if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) fadeHintLater($('wHelp'));
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   if (e.code === 'Enter' && walk.near?.href) location.href = walk.near.href;
   if (e.code === 'Space' && walk.vy === 0 && villager && villager.position.y - walk.ground < .01) walk.vy = 6;
@@ -839,7 +966,10 @@ addEventListener('pointermove', e => {
   camDrag.x = e.clientX; camDrag.y = e.clientY;
 });
 addEventListener('pointerup', e => { if (camDrag && camDrag.id === e.pointerId) camDrag = null; });
-canvas.addEventListener('wheel', e => { if (walk.on) { walk.camDist = Math.max(6, Math.min(26, walk.camDist + e.deltaY * .012)); e.preventDefault(); } }, { passive: false });
+canvas.addEventListener('wheel', e => {
+  fadeHintLater(walk.on ? $('wHelp') : $('hint'));
+  if (walk.on) { walk.camDist = Math.max(6, Math.min(26, walk.camDist + e.deltaY * .012)); e.preventDefault(); }
+}, { passive: false });
 
 // 靠近時的提示卡
 function nearInfo() {
@@ -878,9 +1008,80 @@ function renderNear(n) {
   const peek = nearEl.querySelector('[data-a="peek"]'); if (peek) peek.onclick = () => { showLandmark(n.lm); info.querySelector('.back').onclick = () => { info.hidden = true; }; };
   const lst = nearEl.querySelector('[data-a="list"]'); if (lst) lst.onclick = () => { showInfo(n.it); info.querySelectorAll('.units button').forEach(b => { const lm = n.it.landmarks[+b.dataset.i]; b.onclick = () => walkTo(lm); }); };
 }
-function walkTo(lm) { walk.target = lm; walk.stuck = 0; info.hidden = true; }
+// 自動走路：把群島切成格子，避開所有物件與建築找出最短路，再拉直成幾個轉折點
+const NAV = { h: .3, grid: null };
+function navBuild() {
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+  for (const it of islands) { x0 = Math.min(x0, it.pos.x - R); x1 = Math.max(x1, it.pos.x + R); z0 = Math.min(z0, it.pos.z - R); z1 = Math.max(z1, it.pos.z + R); }
+  const h = NAV.h, nx = Math.ceil((x1 - x0) / h) + 1, nz = Math.ceil((z1 - z0) / h) + 1, free = new Uint8Array(nx * nz);
+  const e = h / 2;   // 格子中心和上下左右半格都能走，才算可以走（避免從島與橋交接的縫隙擦過去）
+  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const x = x0 + i * h, z = z0 + j * h; free[i * nz + j] = blocked(x, z) || blocked(x + e, z) || blocked(x - e, z) || blocked(x, z + e) || blocked(x, z - e) ? 0 : 1; }
+  NAV.grid = { x0, z0, nx, nz, free };
+}
+function navClear(ax, az, bx, bz) {   // 兩點之間直線走得通嗎（兩側各留一點空間，免得擦邊卡住）
+  const L = Math.hypot(bx - ax, bz - az), n = Math.ceil(L / .12); if (L < .01) return true;
+  const px = -(bz - az) / L * .2, pz = (bx - ax) / L * .2;
+  for (let k = 1; k <= n; k++) {
+    const t = k / n, x = ax + (bx - ax) * t, z = az + (bz - az) * t;
+    if (blocked(x, z) || (k < n && (blocked(x + px, z + pz) || blocked(x - px, z - pz)))) return false;
+  }
+  return true;
+}
+function navPath(sx, sz, lm) {
+  if (!NAV.grid) navBuild();
+  const { x0, z0, nx, nz, free } = NAV.grid, h = NAV.h;
+  const cx = i => x0 + i * h, cz = j => z0 + j * h, reachR = lm.pr + 1.2;
+  // 起點：離角色最近的可走格子
+  let si = Math.round((sx - x0) / h), sj = Math.round((sz - z0) / h), start = -1, bd = 1e9;
+  for (let di = -4; di <= 4; di++) for (let dj = -4; dj <= 4; dj++) {
+    const i = si + di, j = sj + dj; if (i < 0 || j < 0 || i >= nx || j >= nz || !free[i * nz + j]) continue;
+    const d = di * di + dj * dj; if (d < bd) { bd = d; start = i * nz + j; }
+  }
+  if (start < 0) return null;
+  // A*：終點是物件周圍任何一格可以站的地方
+  const N = nx * nz, g = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+  const hx = k => Math.max(0, Math.hypot(cx((k / nz) | 0) - lm.wp.x, cz(k % nz) - lm.wp.z) - reachR);
+  const heap = [], push = (k, f) => { heap.push([f, k]); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  g[start] = 0; push(start, hx(start)); let goal = -1;
+  const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+  while (heap.length) {
+    const [, k] = pop(); if (done[k]) continue; done[k] = 1;
+    const i = (k / nz) | 0, j = k % nz;
+    if (Math.hypot(cx(i) - lm.wp.x, cz(j) - lm.wp.z) <= reachR) { goal = k; break; }
+    for (const [di, dj, c] of NB) {
+      const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= nx || jj >= nz) continue;
+      const kk = ii * nz + jj; if (!free[kk] || done[kk]) continue;
+      if (di && dj && (!free[ii * nz + j] || !free[i * nz + jj])) continue;   // 不切牆角
+      const ng = g[k] + c * h; if (ng < g[kk]) { g[kk] = ng; from[kk] = k; push(kk, ng + hx(kk)); }
+    }
+  }
+  if (goal < 0) return null;
+  const cells = []; for (let k = goal; k >= 0; k = from[k]) cells.push({ x: cx((k / nz) | 0), z: cz(k % nz) }); cells.reverse();
+  // 拉直：從目前的點，跳到最遠一個直線走得到的格子
+  const pts = []; let cur = { x: sx, z: sz }, idx = 0;
+  while (idx < cells.length - 1) {
+    let far = idx + 1;
+    for (let k = cells.length - 1; k > idx + 1; k--) if (navClear(cur.x, cur.z, cells[k].x, cells[k].z)) { far = k; break; }
+    pts.push({ x: cells[far].x, z: cells[far].z, stop: .3 }); cur = cells[far]; idx = far;
+  }
+  return pts;
+}
+function walkTo(lm) {
+  walk.target = lm;
+  walk.stuck = 0; walk.replan = 0;
+  info.hidden = true;
+  fadeHintLater($('wHelp'));
+  const pts = navPath(walk.pos.x, walk.pos.z, lm) || [];
+  pts.push({ x: lm.wp.x, z: lm.wp.z, stop: lm.pr + 1.4, lm });
+  walk.path = pts;
+}
 
 // ---------- 進入、離開 ----------
+function syncModeSwitch() {
+  $('bView').classList.toggle('on', !walk.on);
+  $('bWalk').classList.toggle('on', walk.on);
+}
 function spawnAt(lm) {
   if (lm) {   // 找物件旁邊一個能站、而且最靠近這個物件的位置，面向物件
     const base = Math.atan2(lm.it.pos.x - lm.wp.x, lm.it.pos.z - lm.wp.z); let pick = null;
@@ -902,19 +1103,20 @@ function startWalk(lm) {
   if (villager) scene.remove(villager);
   villager = makeVillager(look); scene.add(villager);
   if (!walk.on || lm) spawnAt(lm);
-  walk.on = true; store.set('island.mode', 'walk');
+  walk.on = true; walk.target = null; walk.path = []; store.set('island.mode', 'walk'); syncModeSwitch();
   document.body.classList.add('walking'); controls.enabled = false; fly = null;
   select(null); info.hidden = true; tip.hidden = true;
   $('walkHud').hidden = false; joy.hidden = false; $('wHelp').hidden = touch; renderNear.k = null;
 }
 function stopWalk() {
-  walk.on = false; store.set('island.mode', 'view');
+  walk.on = false; walk.target = null; walk.path = []; store.set('island.mode', 'view'); syncModeSwitch();
   if (villager) { scene.remove(villager); villager = null; }
   document.body.classList.remove('walking'); controls.enabled = true;
   $('walkHud').hidden = true; joy.hidden = true; $('wHelp').hidden = true; nearEl.hidden = true; info.hidden = true;
   const p = walk.pos.clone(); flyTo(p.clone().setY(1), p.clone().add(new THREE.Vector3(0, 60, 60)));
 }
-$('bWalk').onclick = () => startWalk(null);
+$('bView').onclick = () => { if (walk.on) stopWalk(); };
+$('bWalk').onclick = () => { if (!walk.on) startWalk(null); };
 $('wExit').onclick = stopWalk;
 $('wSkin').onclick = () => openMaker(() => startWalk());
 
@@ -960,21 +1162,36 @@ function walkUpdate(dt, t) {
   let mx = 0, mz = 0, amt = Math.min(1, Math.hypot(fx, fz));
   if (amt > .08) {
     walk.target = null;
+    walk.path = [];
     const a = walk.camYaw + Math.PI + Math.atan2(-fx, fz);   // 前方＝背對鏡頭
     mx = Math.sin(a); mz = Math.cos(a);
-  } else if (walk.target) {
-    const lm = walk.target, d = Math.hypot(lm.wp.x - walk.pos.x, lm.wp.z - walk.pos.z) - lm.pr;
-    if (d < 1.4) walk.target = null; else { mx = (lm.wp.x - walk.pos.x); mz = (lm.wp.z - walk.pos.z); const l = Math.hypot(mx, mz); mx /= l; mz /= l; amt = 1; }
+  } else if (walk.path.length) {
+    while (walk.path.length && Math.hypot(walk.path[0].x - walk.pos.x, walk.path[0].z - walk.pos.z) <= walk.path[0].stop) {
+      walk.path.shift();
+    }
+    if (!walk.path.length) walk.target = null;
+    else {
+      const wp = walk.path[0];
+      mx = wp.x - walk.pos.x; mz = wp.z - walk.pos.z;
+      const l = Math.hypot(mx, mz);
+      if (l > .001) { mx /= l; mz /= l; amt = 1; }
+    }
   }
   const speed = (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 8 : 5) * amt * dt;
   const moving = speed > 0;
   if (moving) {
+    fadeHintLater($('wHelp'));
     const nx = walk.pos.x + mx * speed, nz = walk.pos.z + mz * speed;
     let moved = false;
     if (!blocked(nx, nz)) { walk.pos.x = nx; walk.pos.z = nz; moved = true; }
-    else if (!blocked(nx, walk.pos.z)) { walk.pos.x = nx; moved = true; }
-    else if (!blocked(walk.pos.x, nz)) { walk.pos.z = nz; moved = true; }
-    if (!moved && walk.target && (walk.stuck += dt) > .8) walk.target = null;
+    else if (Math.abs(mx * speed) > .002 && !blocked(nx, walk.pos.z)) { walk.pos.x = nx; moved = true; }
+    else if (Math.abs(mz * speed) > .002 && !blocked(walk.pos.x, nz)) { walk.pos.z = nz; moved = true; }
+    if (!moved && walk.path.length && (walk.stuck += dt) > .4) {   // 卡住：重新找一次路，再卡才放棄
+      const goal = walk.path[walk.path.length - 1].lm;
+      if (goal && (walk.replan = (walk.replan || 0) + 1) <= 3) { const pts = navPath(walk.pos.x, walk.pos.z, goal) || []; pts.push({ x: goal.wp.x, z: goal.wp.z, stop: goal.pr + 1.4, lm: goal }); walk.path = pts; walk.stuck = 0; }
+      else { walk.target = null; walk.path = []; }
+    }
+    else if (moved) walk.stuck = 0;
     let dy = Math.atan2(mx, mz) - walk.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); walk.yaw += dy * Math.min(1, dt * 12);
     walk.t += speed * 2.2;
   } else walk.t *= .85;
@@ -993,7 +1210,7 @@ function walkUpdate(dt, t) {
   camGoal.set(p.x + Math.sin(walk.camYaw) * Math.cos(walk.camPitch) * walk.camDist, p.y + 1.4 + Math.sin(walk.camPitch) * walk.camDist, p.z + Math.cos(walk.camYaw) * Math.cos(walk.camPitch) * walk.camDist);
   camera.position.lerp(camGoal, Math.min(1, dt * 6)); controls.target.lerp(lookGoal, Math.min(1, dt * 8)); camera.lookAt(controls.target);
   // 自動走路時鏡頭慢慢轉到角色背後
-  if (walk.target) { let d = (walk.yaw + Math.PI) - walk.camYaw; d = Math.atan2(Math.sin(d), Math.cos(d)); walk.camYaw += d * Math.min(1, dt * 1.5); }
+  if (walk.path.length) { let d = (walk.yaw + Math.PI) - walk.camYaw; d = Math.atan2(Math.sin(d), Math.cos(d)); walk.camYaw += d * Math.min(1, dt * 1.5); }
   // 靠近的物件
   const n = nearInfo(); renderNear(n); hoverLm = n?.lm || null;
   return true;
