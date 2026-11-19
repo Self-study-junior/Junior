@@ -44,6 +44,20 @@
   }
   pick.querySelector('select').onchange = e => { location.hash = X && e.target.value === X.key ? X.key : 'u' + e.target.value; };
 
+  // ---------- 漫畫（2026-11-19）：assets/comics.js 列的單元，標題下多一顆「看漫畫」，點了全螢幕看 ----------
+  const CM = window.COMICS || {}, comicOf = u => (CM[ID] || {})[u.unit];
+  function closeComic() { document.querySelectorAll('.comicbox').forEach(z => z.remove()); document.documentElement.classList.remove('comic-open'); }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.comicbtn'); if (!b) return;
+    const c = (CM[ID] || {})[b.dataset.u]; if (!c) return;
+    const z = document.createElement('div'); z.className = 'comicbox'; z.setAttribute('role', 'dialog'); z.setAttribute('aria-label', c.title);
+    z.innerHTML = `<button class="x" type="button" aria-label="關閉">×</button><img src="${esc(CM.dir + c.file)}" alt="${esc(c.title)}"><p class="tip">點圖放大／縮小，點旁邊或 × 關閉</p>`;
+    z.onclick = ev => { if (ev.target.tagName === 'IMG') z.classList.toggle('big'); else closeComic(); };
+    document.body.appendChild(z); document.documentElement.classList.add('comic-open');
+  });
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeComic(); });
+  addEventListener('hashchange', closeComic);
+
   // ---------- 單元內容 ----------
   function unitHTML(u) {
     const blocks = [['secs', '重點整理']];
@@ -56,7 +70,7 @@
     if (u.terms.length) blocks.push(['terms', '關鍵名詞']);
     const i = D.indexOf(u), prev = D[i - 1], next = D[i + 1];
     return `<header class="uhead"><span class="part">${esc(u.part)}</span>
-      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>
+      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>${comicOf(u) ? `<button class="comicbtn" type="button" data-u="${u.unit}">📖 看漫畫：${esc(comicOf(u).title)}</button>` : ''}
       <nav class="toc">${blocks.map(([k, t]) => `<a href="#u${u.unit}/${k}">${t}</a>`).join('')}</nav></header>
 
       <h2 class="blk-h" id="secs">重點整理 <small>${u.sections.length} 節</small></h2>

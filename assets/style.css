@@ -385,3 +385,13 @@ table.vt td.z.show>*{color:inherit;background:none}
 .exq dd.pit{color:var(--accent);font-weight:500}
 @media (max-width:560px){.exq dl{grid-template-columns:1fr}.exq dt{padding-top:6px}}
 @media print{.exq{box-shadow:none;break-inside:avoid}}
+/* 漫畫（2026-11-19） */
+.comicbtn{display:inline-flex;align-items:center;gap:6px;margin:14px 0 2px;padding:9px 18px;border:1.5px solid var(--accent);border-radius:999px;background:var(--card);color:var(--accent);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.comicbtn:hover{background:var(--accent);color:#fff}
+.comic-open,.comic-open body{overflow:hidden}
+.comicbox{position:fixed;inset:0;z-index:200;background:rgba(10,12,16,.92);overflow:auto;-webkit-overflow-scrolling:touch;padding:0 0 24px}
+.comicbox img{display:block;width:min(900px,100%);height:auto;margin:0 auto;background:#fff;cursor:zoom-in}
+.comicbox.big img{width:auto;max-width:none;cursor:zoom-out}
+.comicbox .x{position:fixed;top:10px;right:12px;z-index:1;width:46px;height:46px;border-radius:50%;border:0;background:#fff;color:#111;font-size:28px;line-height:46px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.comicbox .tip{margin:10px 0 0;text-align:center;color:#cfd3da;font-size:13px}
+@media print{.comicbtn,.comicbox{display:none}}
