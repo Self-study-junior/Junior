@@ -70,7 +70,7 @@
     if (u.terms.length) blocks.push(['terms', '關鍵名詞']);
     const i = D.indexOf(u), prev = D[i - 1], next = D[i + 1];
     return `<header class="uhead"><span class="part">${esc(u.part)}</span>
-      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>${comicsOf(u).map((c, i) => `<button class="comicbtn" type="button" data-u="${u.unit}" data-i="${i}">${c.kind === 'key' ? '📘 單元重點漫畫' : '📖 看漫畫：' + esc(c.title)}</button>`).join('')}
+      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>${comicsOf(u).map((c, i) => `<button class="comicbtn" type="button" data-u="${u.unit}" data-i="${i}">${c.kind === 'key' ? '📘 單元重點漫畫' + (c.title ? '：' + esc(c.title) : '') : '📖 看漫畫：' + esc(c.title)}</button>`).join('')}
       <nav class="toc">${blocks.map(([k, t]) => `<a href="#u${u.unit}/${k}">${t}</a>`).join('')}</nav></header>
 
       <h2 class="blk-h" id="secs">重點整理 <small>${u.sections.length} 節</small></h2>
