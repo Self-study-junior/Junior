@@ -45,13 +45,13 @@
   pick.querySelector('select').onchange = e => { location.hash = X && e.target.value === X.key ? X.key : 'u' + e.target.value; };
 
   // ---------- 漫畫（2026-11-19）：assets/comics.js 列的單元，標題下多一顆「看漫畫」，點了全螢幕看 ----------
-  const CM = window.COMICS || {}, comicOf = u => (CM[ID] || {})[u.unit];
+  const CM = window.COMICS || {}, comicsOf = u => [].concat((CM[ID] || {})[u.unit] || []);   // 2026-11-20 一單元可多張（故事漫畫＋單元重點漫畫）
   function closeComic() { document.querySelectorAll('.comicbox').forEach(z => z.remove()); document.documentElement.classList.remove('comic-open'); }
   document.addEventListener('click', e => {
     const b = e.target.closest('.comicbtn'); if (!b) return;
-    const c = (CM[ID] || {})[b.dataset.u]; if (!c) return;
-    const z = document.createElement('div'); z.className = 'comicbox'; z.setAttribute('role', 'dialog'); z.setAttribute('aria-label', c.title);
-    z.innerHTML = `<button class="x" type="button" aria-label="關閉">×</button><img src="${esc(CM.dir + c.file)}" alt="${esc(c.title)}"><p class="tip">點圖放大／縮小，點旁邊或 × 關閉</p>`;
+    const c = [].concat((CM[ID] || {})[b.dataset.u] || [])[+b.dataset.i || 0]; if (!c) return; const name = c.title || '單元重點漫畫';
+    const z = document.createElement('div'); z.className = 'comicbox'; z.setAttribute('role', 'dialog'); z.setAttribute('aria-label', name);
+    z.innerHTML = `<button class="x" type="button" aria-label="關閉">×</button><img src="${esc(CM.dir + c.file)}" alt="${esc(name)}"><p class="tip">點圖放大／縮小，點旁邊或 × 關閉</p>`;
     z.onclick = ev => { if (ev.target.tagName === 'IMG') z.classList.toggle('big'); else closeComic(); };
     document.body.appendChild(z); document.documentElement.classList.add('comic-open');
   });
@@ -70,7 +70,7 @@
     if (u.terms.length) blocks.push(['terms', '關鍵名詞']);
     const i = D.indexOf(u), prev = D[i - 1], next = D[i + 1];
     return `<header class="uhead"><span class="part">${esc(u.part)}</span>
-      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>${comicOf(u) ? `<button class="comicbtn" type="button" data-u="${u.unit}">📖 看漫畫：${esc(comicOf(u).title)}</button>` : ''}
+      <h1><span class="no">${u.unit}</span>${esc(u.title)}</h1><p class="sum">${esc(u.summary)}</p>${comicsOf(u).map((c, i) => `<button class="comicbtn" type="button" data-u="${u.unit}" data-i="${i}">${c.kind === 'key' ? '📘 單元重點漫畫' : '📖 看漫畫：' + esc(c.title)}</button>`).join('')}
       <nav class="toc">${blocks.map(([k, t]) => `<a href="#u${u.unit}/${k}">${t}</a>`).join('')}</nav></header>
 
       <h2 class="blk-h" id="secs">重點整理 <small>${u.sections.length} 節</small></h2>

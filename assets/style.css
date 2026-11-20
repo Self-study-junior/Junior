@@ -395,3 +395,4 @@ table.vt td.z.show>*{color:inherit;background:none}
 .comicbox .x{position:fixed;top:10px;right:12px;z-index:1;width:46px;height:46px;border-radius:50%;border:0;background:#fff;color:#111;font-size:28px;line-height:46px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45)}
 .comicbox .tip{margin:10px 0 0;text-align:center;color:#cfd3da;font-size:13px}
 @media print{.comicbtn,.comicbox{display:none}}
+.comicbtn+.comicbtn{margin-left:10px}
